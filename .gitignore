@@ -1,0 +1,7 @@
+/docs/
+/lib/
+/bin/
+/.shards/
+*.dwarf
+.envrc
+public/css/bulma.min.css
