@@ -3,6 +3,8 @@ require "kemal"
 require "./container"
 require "./db"
 
+port = ENV["WEB_PORT"].to_i
+
 db = Container.resolve(Database)
 
 title = "Temps"
@@ -23,4 +25,4 @@ get "/api/graph" do |env|
   graph_data.to_json
 end
 
-Kemal.run(3000)
+Kemal.run(port)

@@ -1,0 +1,16 @@
+[Unit]
+Description=Temperature viewing application
+
+[Service]
+WorkingDirectory=/usr/local/crystal-sensor
+Environment=DB_URL=postgres://postgres:password@host:port/db
+Environment=WEB_PORT=4000
+ExecStart=/usr/local/crystal-sensor
+ProtectSystem=strict
+ProtectHome=true
+PrivateUsers=true
+PrivateTmp=true
+DynamicUser=yes
+
+[Install]
+WantedBy=multi-user.target
