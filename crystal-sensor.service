@@ -5,7 +5,7 @@ Description=Temperature viewing application
 WorkingDirectory=/usr/local/crystal-sensor
 Environment=DB_URL=postgres://postgres:password@host:port/db
 Environment=WEB_PORT=4000
-ExecStart=/usr/local/crystal-sensor
+ExecStart=/usr/local/crystal-sensor/crystal-sensor
 ProtectSystem=strict
 ProtectHome=true
 PrivateUsers=true
