@@ -1,2 +1,2 @@
 # TODO:
-- Oops no y axis legend
+- Figure out settings for logging

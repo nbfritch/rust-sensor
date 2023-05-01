@@ -89,4 +89,16 @@ class Database
 
     lines
   end
+
+  def create_reading(sensor_name : String, temperature : Float64) : Int64
+    sensor_id = @db.query_one("select id from sensors where name = $1", sensor_name) do |r|
+      r.read(Int64)
+    end
+
+    reading_id = @db.query_one("insert into readings (temperature, sensor_id) values ($1, $2) returning id", temperature, sensor_id) do |r|
+      r.read(Int64)
+    end
+
+    reading_id
+  end
 end
