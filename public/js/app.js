@@ -86,7 +86,7 @@ const redrawCursor = c => {
 
 const redrawTemperatureLegend = (c) => {
   const existingLegendElements = document.getElementById(xAxisLegend);
-  if (existingLegendElements != null && existingLegendElements.length != 0) {
+  if (existingLegendElements != null && existingLegendElements.children.length != 0) {
     [...existingLegendElements.children].forEach(el => {
       if (el.hasAttribute('data-temperature')) {
         const temp = parseInt(el.getAttribute('data-temperature'));
@@ -97,6 +97,17 @@ const redrawTemperatureLegend = (c) => {
         }
       }
     });
+  } else {
+    for (let i = c.minTemp + 1; i < c.maxTemp; i++) {
+      const t = c.tempToPx(i)
+      const legend = document.createElementNS('http://www.w3.org/2000/svg', "text");
+      legend.setAttribute("x", "5");
+      legend.setAttribute("y", t);
+      legend.setAttribute("data-temperature", i);
+      legend.setAttribute("textLength", "30");
+      legend.innerHTML = `${i}${degreesF}`;
+      existingLegendElements.appendChild(legend);
+    }
   }
 };
 
@@ -353,8 +364,8 @@ const parseMetadata = (data) => {
   maxDateEl.innerHTML = prettyDate(maxTime);
 
   return {
-    minTemp: minTemp - 1,
-    maxTemp: maxTemp + 1,
+    minTemp: Math.floor(minTemp) - 1,
+    maxTemp: Math.ceil(maxTemp) + 1,
     minTime,
     maxTime,
   };
