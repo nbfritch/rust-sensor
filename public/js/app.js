@@ -19,7 +19,18 @@ const yAxisPad = 40;
 let sharedData = {};
 let svgContext = null;
 
-const colorLut = ["red", "green", "blue", "orange", "purple"];
+const colorLut = [
+	"red",
+	"green",
+	"blue",
+	"orange",
+	"purple",
+	"maroon",
+	"black",
+	"crimson",
+	"chocolate",
+	"cornflowerblue"
+];
 
 // Keep track of the current width/height of the svg
 class SvgContext {
