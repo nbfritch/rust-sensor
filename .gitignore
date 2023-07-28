@@ -1,9 +1,3 @@
-/docs/
-/lib/
-/bin/
-/.shards/
-*.dwarf
-.envrc
-public/css/bulma.min.css
-rel/
-release.tar.gz
+/target
+.env
+/public/css/bulma.min.css

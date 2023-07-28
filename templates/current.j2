@@ -1,0 +1,24 @@
+{% extends "layout.j2" %}
+{% block title %}
+Tembos
+{% endblock title %}
+
+{% block content %}
+<main id="app-main">
+  <div class="container has-text-centered">
+    <h1 class="is-size-1">Current Temps:</h1>
+    {% for reading in current_readings %}
+      <div>
+        <h2 class="is-size-2">
+          {{reading.description}}
+        </h2>
+        <p>aka {{reading.name}}</p>
+        <p>
+          {{reading.temperature}}°F {{reading.minutes_ago}} minutes ago
+        </p>
+      </div>
+    {% endfor %}
+  </div>
+</main>
+{% endblock content %}
+

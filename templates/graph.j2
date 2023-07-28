@@ -1,0 +1,30 @@
+{% extends "layout.j2" %}
+{% block title %}
+Tembos
+{% endblock title %}
+
+{% block content %}
+<main id="app-main">
+  <div class="graph-container">
+    <svg id="graph" height="100%" width="95%">
+      <g id="x-axis-legend">
+      </g>
+      <g id="y-axis-ticks">
+      </g>
+      <g id="x-axis-ticks">
+      </g>
+      <g id="cursor-container">
+        <path id="cursor" class="graph-line" stroke="red" strokewidth="2" d="M 65 0 V 800"></path>
+      </g>
+      <g id="lines-container">
+      </g>
+    </svg>
+  </div>
+</main>
+<footer id="app-footer">
+  <div id="legend" class="columns"></div>
+  <span id="min-time"></span>
+  <span id="current-time" class="current-time"></span>
+  <span id="max-time"></span>
+</footer>
+{% endblock content %}

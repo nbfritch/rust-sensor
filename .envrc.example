@@ -1,2 +1,0 @@
-export WEB_PORT=3000
-export DB_URL=postgres://user:pass@host:port/database
