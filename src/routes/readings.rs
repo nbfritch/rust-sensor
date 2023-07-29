@@ -1,3 +1,4 @@
+use actix_web::put;
 use actix_web::web;
 use actix_web::HttpResponse;
 use actix_web::web::Json;
@@ -5,6 +6,7 @@ use serde_json::json;
 
 use crate::types::CreateReadingRequest;
 
+#[put("/api/readings{tail}*")]
 pub async fn create_reading(
     pool: web::Data<sqlx::PgPool>,
     Json(create_reading_request): web::Json<CreateReadingRequest>,
