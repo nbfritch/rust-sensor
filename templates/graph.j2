@@ -5,8 +5,19 @@ Tembos
 
 {% block content %}
 <main id="app-main">
+  {% if show_date %}
+  <div id="date-controls" class="m-2 date-controls columns is-full">
+    <div class="column">
+      <label class="label" for="date">Year</label>
+      <input class="input" id="date-input" name="date" type="date" placeholder="YYYY-MM-DD">
+    </div>
+  </div>
+  <div class="m-2 date-controls">
+    <button id="refetch-data" class="button is-primary">Search</button>
+  </div>
+  {% endif %}
   <div class="graph-container">
-    <svg id="graph" height="100%" width="95%">
+    <svg id="graph" height="100%" width="99%">
       <g id="x-axis-legend">
       </g>
       <g id="y-axis-ticks">

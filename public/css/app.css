@@ -12,7 +12,7 @@ path {
 }
 
 html {
-  height: 97%;
+  height: 99%;
 }
 
 body {
@@ -33,6 +33,10 @@ body {
 }
 
 #app-main {
+  flex: 1 1 auto;
+}
+
+.date-controls {
   flex: 1 1 auto;
 }
 

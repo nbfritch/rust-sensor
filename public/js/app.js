@@ -40,7 +40,7 @@ class SvgContext {
     this.minTemp = minTemp;
     this.maxTemp = maxTemp;
     this.minTime = minTime;
-    this.maxTime = maxTime;
+    this.maxTime = maxTime ;
   }
 
   // Scale a temperature to an amount of px
@@ -62,7 +62,11 @@ class SvgContext {
   pxToTime(px) {
     const timeWidth = this.maxTime - this.minTime;
     const percent = (px - xAxisPad) / this.width;
-    const time = (timeWidth * percent) + this.minTime;
+    let time = (timeWidth * percent) + this.minTime;
+    if (percent >= 0.90) {
+      return this.maxTime
+    }
+
     return time;
   }
 }
@@ -217,6 +221,7 @@ const prettyDate = (fdate) => {
 };
 
 const handleCursorEnter = (_e) => {
+  if (svgContext == null) return;
   const cursorEl = document.getElementById(cursorElementId);
   if (cursorEl.hasAttribute('style')) {
     cursorEl.removeAttribute('style');
@@ -224,6 +229,7 @@ const handleCursorEnter = (_e) => {
 };
 
 const handleCursorLeave = (_e) => {
+  if (svgContext == null) return;
   const cursorEl = document.getElementById(cursorElementId);
   if (!cursorEl.hasAttribute('style')) {
     cursorEl.setAttribute('style', 'display: none;');
@@ -231,6 +237,7 @@ const handleCursorLeave = (_e) => {
 };
 
 const handleSvgTouchStart = (_e) => {
+  if (svgContext == null) return;
   const cursorEl = document.getElementById(cursorElementId);
   if (cursorEl.hasAttribute('style')) {
     cursorEl.removeAttribute('style');
@@ -238,6 +245,7 @@ const handleSvgTouchStart = (_e) => {
 };
 
 const handleSvgTouchEnd = (touchEv) => {
+  if (svgContext == null) return;
   const touch = touchEv.changedTouches[0];
   const x = touch.clientX;
   if (x > xAxisPad) {
@@ -249,6 +257,7 @@ const handleSvgTouchEnd = (touchEv) => {
 };
 
 const handleTouchOnSvg = (touchEv) => {
+  if (svgContext == null) return;
   const touch = touchEv.touches[0];
   const x = touch.clientX;
   if (x > xAxisPad) {
@@ -260,6 +269,7 @@ const handleTouchOnSvg = (touchEv) => {
 }
 
 const handleCursorMoveOnSvg = (ev) => {
+  if (svgContext == null) return;
   const rect = ev.target.getBoundingClientRect();
   const x = ev.clientX - rect.left;
   if (x > xAxisPad) {
@@ -396,6 +406,34 @@ const fetchData = async (timespan) => {
   sharedData.meta = parseMetadata(data);
 };
 
+const fetchHistoryData = async () => {
+  const dateEl = document.getElementById('date-input');
+  if (dateEl == null || !dateEl.value) {
+    dateEl.classList.add('is-danger');
+    return;
+  }
+  
+  const dateParts = dateEl.value.split("-");
+  if (dateParts.length != 3) {
+    dateEl.classList.add('is-danger');
+    return;
+  }
+
+  const [year, month, day] = dateParts.map(p => parseInt(p, 10));
+
+  const rawData = await (await fetch(`${window.location.origin}/api/history?year=${year}&month=${month}&day=${day}`)).json()
+
+  const data = rawData.map(line => ({
+    ...line,
+    points: line.points.map(p =>
+      ({ ...p, reading_date: p.reading_date * 1000 })
+    )
+  }));
+
+  sharedData = data;
+  sharedData.meta = parseMetadata(data);
+};
+
 const parseHash = () => {
   const filter = (window.location.hash || "").replace("#", "");
   if (!["hour", "day", "week", "month"].includes(filter)) {
@@ -408,10 +446,9 @@ const parseHash = () => {
 const parseAndFetch = async () => {
   const search = parseHash();
   await fetchData(search);
-}
+};
 
-const main = async () => {
-  await parseAndFetch()
+const dataPresentMain = async () => {
   createLegend(sharedData);
 
   const cursorReader = document.getElementById(graphElementId);
@@ -427,23 +464,62 @@ const main = async () => {
   redrawGraph();
 };
 
+const main = async () => {
+  const dateControls = document.getElementById('date-controls');
+  if (dateControls != null) {
+    const searchButton = document.getElementById('refetch-data');
+    if (searchButton == null) return;
+    searchButton.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await fetchHistoryData();
+      await dataPresentMain();
+    });
+    return;
+  } else {
+    await parseAndFetch();
+    await dataPresentMain();
+  }
+};
+
+const handleCancelMenu = (ev) => {
+  if (ev.defaultPrevented) {
+    return;
+  }
+  console.log('handling cancel');
+  const burgerElement = document.getElementById(burgerId);
+  const mainNav = document.getElementById(mainNavId);
+  burgerElement.classList.remove("is-active");
+  mainNav.classList.remove("is-active");
+  redrawGraph();
+  unregisterHandleCancel();
+};
+
+const unregisterHandleCancel = () => {
+  console.log('unregistering cancel')
+  document.removeEventListener('click', handleCancelMenu);
+}
+
 document.addEventListener('DOMContentLoaded', (_e) => {
   const burgerElement = document.getElementById(burgerId);
-  burgerElement.addEventListener('click', (_ev) => {
+  const dropdown = document.getElementById("nav-dropdown");
+  let enabled = false;
+  burgerElement.addEventListener('click', (ev) => {
+    console.log('handling burger click');
+    ev.preventDefault();
     const target = document.getElementById(mainNavId);
-    target.classList.toggle('is-active');
-    burgerElement.classList.toggle('is-active');
+    target.classList.add('is-active');
+    burgerElement.classList.add('is-active');
+    document.addEventListener('click', handleCancelMenu);
   });
 
-  const dropdown = document.getElementById("nav-dropdown");
+ 
 
   const graph = document.getElementById(graphElementId);
   if (graph != null) {
     window.addEventListener('hashchange', async () => {
-      main();
-
       burgerElement.classList.remove("is-active");
       dropdown.classList.remove("is-active");
+      await main();
     });
 
     let timeout = null;

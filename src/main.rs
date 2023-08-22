@@ -10,6 +10,7 @@ use actix_web::web::{self, Data};
 use actix_web::{App, HttpServer};
 use actix_web_static_files::ResourceFiles;
 use routes::graph::{graph_data, graph_page};
+use routes::history::{historical_graph, history_page};
 use routes::readings::create_reading;
 use sqlx::postgres::PgPoolOptions;
 use std::path::Path;
@@ -66,6 +67,8 @@ async fn main() {
             .service(create_reading)
             .route("/graph", web::get().to(graph_page))
             .route("/api/graph", web::get().to(graph_data))
+            .route("/history", web::get().to(history_page))
+            .route("/api/history", web::get().to(historical_graph))
             .app_data(Data::new(state))
             .app_data(Data::new(pool.clone()))
     })
