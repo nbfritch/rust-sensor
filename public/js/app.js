@@ -12,6 +12,7 @@ const hoveredDateId = 'current-time';
 const xAxisLegend = 'x-axis-legend';
 const xAxisTicks = 'x-axis-ticks';
 const yAxisTicks = 'y-axis-ticks';
+const dateControlsId = 'date-controls';
 const xAxisPad = 40;
 const yAxisPad = 40;
 
@@ -34,13 +35,41 @@ const colorLut = [
 
 // Keep track of the current width/height of the svg
 class SvgContext {
-  constructor(width, height, minTemp, maxTemp, minTime, maxTime) {
+  constructor(width, height, minTemp, maxTemp, minTime, maxTime, isHistory) {
     this.width = width;
-    this.height = height;
+    if (isHistory) {
+      this.height = height - 168;
+    } else {
+      this.height = height;
+    }
     this.minTemp = minTemp;
     this.maxTemp = maxTemp;
     this.minTime = minTime;
-    this.maxTime = maxTime ;
+    this.maxTime = maxTime;
+    this.isHistory = isHistory;
+  }
+
+  setHeight(newHeight) {
+    if (this.isHistory) {
+      const nav = document.getElementById('app-nav');
+      const dateControls = document.getElementById(dateControlsId);
+      const searchButton = document.getElementById('search-button');
+      const footer = document.getElementById('app-footer');
+      const bias = [nav, dateControls, searchButton, footer].map(e => {
+        return e == null ? 0 : e.clientHeight
+      }).reduce((acc, i) => acc + i, 0);
+      const bodyHeight = document.body.clientHeight;
+      const h = bodyHeight - (bias + 32);
+      const gBox = document.getElementById('graph-box');
+      gBox.setAttribute('style', `height: ${h}px`)
+      this.height = h;
+    } else {
+      this.height = newHeight;
+    }
+  }
+
+  setWidth(newWidth) {
+    this.width = newWidth;
   }
 
   // Scale a temperature to an amount of px
@@ -93,6 +122,9 @@ const twentyFourHours = (24 * 60 * 60) * 1000;
 const aWeek = 7 * twentyFourHours;
 
 const redrawCursor = c => {
+  if (c == null) {
+    return;
+  }
   const existingCursor = document.getElementById(cursorElementId);
   const dataFragments = existingCursor.getAttribute('d').split(' ');
   const heightRemoved = dataFragments.slice(0, dataFragments.length - 1);
@@ -100,6 +132,9 @@ const redrawCursor = c => {
 }
 
 const redrawTemperatureLegend = (c) => {
+  if (c == null) {
+    return;
+  }
   const existingLegendElements = document.getElementById(xAxisLegend);
   if (existingLegendElements != null && existingLegendElements.children.length != 0) {
     [...existingLegendElements.children].forEach(el => {
@@ -129,7 +164,13 @@ const redrawTemperatureLegend = (c) => {
 const reDrawAxisLines = (c) => {
   // Destroy current lines
   let xTicksContainer = document.getElementById(xAxisTicks);
+  if (xTicksContainer == null) {
+    return;
+  }
   let yTicksContainer = document.getElementById(yAxisTicks);
+  if (yTicksContainer == null) {
+    return;
+  }
   [...xTicksContainer.children].forEach(c => c.remove());
   [...yTicksContainer.children].forEach(c => c.remove());
 
@@ -197,6 +238,9 @@ const redrawGraph = () => {
   reDrawAxisLines(svgContext);
   redrawTemperatureLegend(svgContext);
   redrawCursor(svgContext);
+  if (!(Symbol.iterator in sharedData)) {
+    return;
+  }
   for (let sensor of sharedData) {
     let el = getOrCreateLine(sensor.id);
     el.setAttribute('d', renderSvgLine(svgContext, sensor, sensor.points));
@@ -305,8 +349,10 @@ const renderTempsForCursor = (c, x) => {
     legendElement.innerText = `${temp.temperature}${degreesF}`;
   }
 
-  const dateOutputElement = document.getElementById(currentTimeId);
-  dateOutputElement.textContent = `${temps[0].reading_date}`;
+  if (temps != null && temps.length > 0) {
+    const dateOutputElement = document.getElementById(currentTimeId);
+    dateOutputElement.textContent = `${temps[0].reading_date}`;
+  }
 };
 
 const createLegend = (data) => {
@@ -458,14 +504,16 @@ const dataPresentMain = async () => {
     sharedData.meta.minTemp,
     sharedData.meta.maxTemp,
     sharedData.meta.minTime,
-    sharedData.meta.maxTime
+    sharedData.meta.maxTime,
+    window.location.href.includes('history')
   );
 
+  svgContext.setHeight(document.body.clientHeight);
   redrawGraph();
 };
 
 const main = async () => {
-  const dateControls = document.getElementById('date-controls');
+  const dateControls = document.getElementById(dateControlsId);
   if (dateControls != null) {
     const searchButton = document.getElementById('refetch-data');
     if (searchButton == null) return;
@@ -485,7 +533,6 @@ const handleCancelMenu = (ev) => {
   if (ev.defaultPrevented) {
     return;
   }
-  console.log('handling cancel');
   const burgerElement = document.getElementById(burgerId);
   const mainNav = document.getElementById(mainNavId);
   burgerElement.classList.remove("is-active");
@@ -495,7 +542,6 @@ const handleCancelMenu = (ev) => {
 };
 
 const unregisterHandleCancel = () => {
-  console.log('unregistering cancel')
   document.removeEventListener('click', handleCancelMenu);
 }
 
@@ -504,15 +550,12 @@ document.addEventListener('DOMContentLoaded', (_e) => {
   const dropdown = document.getElementById("nav-dropdown");
   let enabled = false;
   burgerElement.addEventListener('click', (ev) => {
-    console.log('handling burger click');
     ev.preventDefault();
     const target = document.getElementById(mainNavId);
     target.classList.add('is-active');
     burgerElement.classList.add('is-active');
     document.addEventListener('click', handleCancelMenu);
   });
-
- 
 
   const graph = document.getElementById(graphElementId);
   if (graph != null) {
@@ -529,8 +572,8 @@ document.addEventListener('DOMContentLoaded', (_e) => {
       }
       timeout = setTimeout(() => {
         const cursorReader = document.getElementById(graphElementId);
-        svgContext.width = Math.floor(cursorReader.clientWidth);
-        svgContext.height = Math.floor(cursorReader.clientHeight);
+        svgContext.setWidth(Math.floor(cursorReader.clientWidth));
+        svgContext.setHeight(Math.floor(cursorReader.clientHeight));
         redrawGraph();
       }, 250);
     });
