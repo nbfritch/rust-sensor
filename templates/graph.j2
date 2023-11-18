@@ -4,38 +4,15 @@ Tembos
 {% endblock title %}
 
 {% block content %}
-<main id="app-main">
-  {% if show_date %}
-  <div id="date-controls" class="m-2 date-controls columns is-full">
-    <div class="column">
-      <label class="label" for="date">Year</label>
-      <input class="input" id="date-input" name="date" type="date" placeholder="YYYY-MM-DD">
-    </div>
-  </div>
-  <div id="search-button" class="m-2 date-controls">
-    <button id="refetch-data" class="button is-primary">Search</button>
-  </div>
-  {% endif %}
-  <div id="graph-box" class="graph-container" style="height: 100%">
-    <svg id="graph" height="100%" width="99%">
-      <g id="x-axis-legend">
-      </g>
-      <g id="y-axis-ticks">
-      </g>
-      <g id="x-axis-ticks">
-      </g>
-      <g id="cursor-container">
-        <path id="cursor" class="graph-line" stroke="red" strokewidth="2" d="M 65 0 V 800"></path>
-      </g>
-      <g id="lines-container">
-      </g>
-    </svg>
-  </div>
+<main>
+  <canvas id="units-canvas"></canvas>
+  <canvas id="main-canvas"></canvas>
 </main>
-<footer id="app-footer">
-  <div id="legend" class="columns"></div>
-  <span id="min-time"></span>
-  <span id="current-time" class="current-time"></span>
-  <span id="max-time"></span>
+<footer>
+  <div>
+    <p>Sensor 1: <strong>69</strong> Sensor 2: <strong>72</strong> Sensor 3: <strong>66</strong></p>
+  </div>
 </footer>
+<script type="module" crossorigin src="/static/{{ href_for(filename="index.js") }}"></script>
+
 {% endblock content %}

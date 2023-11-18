@@ -3,8 +3,10 @@ mod models;
 mod routes;
 mod state;
 mod types;
+mod url;
 use crate::routes::index::index;
 use crate::state::AppStateStruct;
+use actix_cors;
 use actix_web::middleware::Logger;
 use actix_web::web::{self, Data};
 use actix_web::{App, HttpServer};
@@ -12,6 +14,7 @@ use actix_web_static_files::ResourceFiles;
 use routes::graph::{graph_data, graph_page};
 use routes::history::{historical_graph, history_page};
 use routes::readings::create_reading;
+use url::build_href_for;
 use sqlx::postgres::PgPoolOptions;
 use std::path::Path;
 
@@ -31,8 +34,8 @@ async fn main() {
         .parse()
         .expect("Could not parse WEB_PORT, invalid integer");
 
-    let web_address_var: String = std::env::var("WEB_ADDRESS")
-        .expect("Could not find WEB_ADDRESS in env");
+    let web_address_var: String =
+        std::env::var("WEB_ADDRESS").expect("Could not find WEB_ADDRESS in env");
     let web_address: &str = &web_address_var;
 
     let pool = PgPoolOptions::new()
@@ -46,7 +49,9 @@ async fn main() {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
     HttpServer::new(move || {
+        let cors = actix_cors::Cors::permissive();
         let generated = generate();
+        let available_files = generated.keys().map(|k| String::from(*k)).collect::<Vec<_>>();
         let state = std::sync::Arc::new(AppStateStruct::new({
             let mut tera = tera::Tera::new(
                 &(template_folder
@@ -56,11 +61,13 @@ async fn main() {
                     + "/**/*"),
             )
             .expect("Parsing error while loading template folder");
+            tera.register_function("href_for", build_href_for(available_files));
             tera.autoescape_on(vec!["j2"]);
             tera
         }));
 
         App::new()
+            .wrap(cors)
             .wrap(Logger::default())
             .service(ResourceFiles::new("/static", generated))
             .service(web::resource("/").to(index))
