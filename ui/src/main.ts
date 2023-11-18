@@ -1,4 +1,4 @@
-import { CanvasLineGraphRenderer, IGraphBounds, TemperatureTimePoint } from './graph';
+import { CanvasLineGraphRenderer, TemperatureTimePoint } from './graph';
 import './style.css'
 import './bulma.min.css'
 
@@ -13,6 +13,21 @@ const readHash = () => {
   return window.location.hash.replace('#', '');
 };
 
+const stepSizeForHash = (hash: string): number => {
+  switch (hash) {
+    case 'hour':
+      return 3 * 60; // 3 minutes
+    case 'day':
+      return 60 * 60; // 1 hour
+    case 'week':
+      return 6 * 60 * 60; // 6 hours;
+    case 'month':
+      return 24 * 60 * 60; // 24 hours;
+    default:
+      return 60 * 60;
+  }
+};
+
 const main = async () => {
   const mainCanvas = document.getElementById('main-canvas') as HTMLCanvasElement | null;
   if (mainCanvas == null) {
@@ -24,10 +39,9 @@ const main = async () => {
     throw new Error('Could not find #units-canvas');
   }
 
-  const stepSize = 3 * 60 * 60; // Figure this out better
-
-  const graphDataResponse = await fetch(`/api/graph?last=${readHash()}`, {headers: {mode: 'no-cors'}});
-  const graphData = (await graphDataResponse.json()) as Array<{id: string, points: Array<TemperatureTimePoint>}>;
+  const hashValue = readHash();
+  const stepSize = stepSizeForHash(hashValue);
+  const graphData = await fetchData(hashValue);
 
   const graphRenderer = new CanvasLineGraphRenderer(
     mainCanvas, unitCanvas, stepSize, 1
@@ -36,6 +50,8 @@ const main = async () => {
   window.addEventListener('hashchange', async () => {
     const hashValue = readHash();
     const d = await fetchData(hashValue);
+    const stepSize = stepSizeForHash(hashValue);
+    graphRenderer.setStepsize(stepSize);
     graphRenderer.ingestData(d);
   });
 

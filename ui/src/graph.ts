@@ -99,6 +99,10 @@ export class CanvasLineGraphRenderer {
     this.drawCursor();
   }
 
+  public setStepsize(stepSize: number): void {
+    this.xAxisInterval = stepSize;
+  }
+
   public ingestData(data: Array<{ id: string, points: Array<TemperatureTimePoint> }>) {
     let g: Record<string, Array<TemperatureTimePoint>> = {};
     let minTime: number | null = null;
