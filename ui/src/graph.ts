@@ -21,6 +21,7 @@ export interface TemperatureTimePoint {
   reading_date: number;
 }
 
+const defaultYaxisStep = (3 * 60);
 const now = new Date().getTime();
 const defaultGraphBounds: IGraphBounds = {
   x: {
@@ -30,7 +31,6 @@ const defaultGraphBounds: IGraphBounds = {
     lower: now - (3 * 60), upper: now,
   }
 };
-const defaultYaxisStep = (3 * 60);
 
 const prettyDate = (dateNumber: number): string => {
   const d = new Date(dateNumber * 1000);
@@ -45,6 +45,8 @@ const prettyDate = (dateNumber: number): string => {
   return `${month}/${day} ${displayHours}:${displayMinutes}`;
 };
 
+const degrees360 = Math.PI + (Math.PI * 3) / 2
+
 export class CanvasLineGraphRenderer {
   private bounds: IGraphBounds = defaultGraphBounds;
   private drawableWidth: number;
@@ -53,15 +55,8 @@ export class CanvasLineGraphRenderer {
   private unitHeight: number;
   private mainCtx: CanvasRenderingContext2D;
   private unitCtx: CanvasRenderingContext2D;
-
   private lineData: Record<string, Array<IDataPoint<TemperatureTimePoint>>> = {};
   private cursorPosition: number | null = null;
-
-  private shouldRerender = true;
-
-  public get needsRender(): boolean {
-    return this.shouldRerender;
-  }
 
   constructor(
     private mainCanvas: HTMLCanvasElement,
@@ -91,7 +86,6 @@ export class CanvasLineGraphRenderer {
       throw new Error('Failed to get 2d context for util canvas');
     }
     this.unitCtx = unitCanvasCtx;
-    this.shouldRerender = true;
   }
 
   public render() {
@@ -103,10 +97,9 @@ export class CanvasLineGraphRenderer {
     this.drawLines();
     this.drawHiglightedPoints();
     this.drawCursor();
-    this.shouldRerender = false;
   }
 
-  public ingestData(data: Array<{id: string, points: Array<TemperatureTimePoint>}>) {
+  public ingestData(data: Array<{ id: string, points: Array<TemperatureTimePoint> }>) {
     let g: Record<string, Array<TemperatureTimePoint>> = {};
     let minTime: number | null = null;
     let maxTime: number | null = null;
@@ -153,7 +146,6 @@ export class CanvasLineGraphRenderer {
         };
       }).sort((a, b) => a.x - b.x);
     });
-    this.shouldRerender = true;
   }
 
   private reprojectData() {
@@ -170,7 +162,6 @@ export class CanvasLineGraphRenderer {
 
   public setCursorPosition(position: number | null): void {
     this.cursorPosition = position != null ? position - this.unitWidth : position;
-    this.shouldRerender = true;
   }
 
   public handleResize(mainCanvas: HTMLCanvasElement, yAxisCanvas: HTMLCanvasElement) {
@@ -198,7 +189,6 @@ export class CanvasLineGraphRenderer {
     }
     this.unitCtx = unitCanvasCtx;
     this.reprojectData();
-    this.shouldRerender = true;
   }
 
   private clear() {
@@ -328,62 +318,86 @@ export class CanvasLineGraphRenderer {
       }
     });
 
-    let topPadding = 10;
-    const separationPadding = 10;
-    const height = 20;
+    let topPadding = this.style.tooltipTopMargin;
+    const separationPadding = this.style.tooltipSeparation;
+    const height = this.style.tooltipHeight;
+    const {
+      tooltipInnerPadding,
+      tooltipDateWidth,
+      tooltipTurnaroundPx,
+      tooltipWidth,
+      tooltipDistanceFromCursor,
+      tooltipDateColor,
+      tooltipFont,
+      tooltipBackground
+    } = this.style;
 
-    if (pos < (this.drawableWidth - 200)) {
-      this.mainCtx.fillStyle = "black";
-      this.mainCtx.fillRect(pos + 20, topPadding, 110, height);
-      this.mainCtx.fillStyle = 'red';
-      this.mainCtx.font = `14px sans-serif`;
+    if (pos < (this.drawableWidth - tooltipTurnaroundPx)) {
+      this.mainCtx.fillStyle = tooltipBackground;
+      this.mainCtx.fillRect(pos + tooltipDistanceFromCursor, topPadding, tooltipDateWidth, height);
+      this.mainCtx.fillStyle = tooltipDateColor;
+      this.mainCtx.font = tooltipFont;
       if (hoveredDate != null) {
-        this.mainCtx.fillText(prettyDate(hoveredDate), pos + 20 + 5, topPadding + height - 5);
+        this.mainCtx.fillText(
+          prettyDate(hoveredDate),
+          pos + tooltipDistanceFromCursor + tooltipInnerPadding,
+          topPadding + height - tooltipInnerPadding
+        );
       }
     } else {
-      this.mainCtx.fillStyle = "black";
-      this.mainCtx.fillRect(pos - (20 + 110), topPadding, 110, height);
-      this.mainCtx.fillStyle = 'red';
-      this.mainCtx.font = `14px sans-serif`;
+      this.mainCtx.fillStyle = tooltipBackground;
+      this.mainCtx.fillRect(pos - (tooltipDistanceFromCursor + tooltipDateWidth), topPadding, tooltipDateWidth, height);
+      this.mainCtx.fillStyle = tooltipDateColor;
+      this.mainCtx.font = tooltipFont;
       if (hoveredDate != null) {
-        this.mainCtx.fillText(prettyDate(hoveredDate), pos - (20 + 110 - 5), topPadding + height - 5);
+        this.mainCtx.fillText(
+          prettyDate(hoveredDate),
+          pos - (tooltipDistanceFromCursor + tooltipDateWidth - tooltipInnerPadding),
+          topPadding + height - tooltipInnerPadding
+        );
       }
     }
 
     topPadding = topPadding + separationPadding + height;
 
-    Object.keys(closestPointsToCursor).sort((a, b) => closestPointsToCursor[b].original.temperature - closestPointsToCursor[a].original.temperature).forEach(line => {
-      const { color, fontColor, width } = (this.style.dataLineStyle[line] ?? this.style.defaultLineStyle);
-      const point = closestPointsToCursor[line];
-      this.mainCtx.beginPath();
-      this.mainCtx.strokeStyle = color;
-      this.mainCtx.arc(point.x, point.y, 4, 0, Math.PI + (Math.PI * 3) / 2);
-      this.mainCtx.stroke();
+    Object.keys(closestPointsToCursor)
+      .sort((a, b) =>
+        closestPointsToCursor[b].original.temperature - closestPointsToCursor[a].original.temperature)
+      .forEach(line => {
+        const { color, fontColor, width } = (this.style.dataLineStyle[line] ?? this.style.defaultLineStyle);
+        const point = closestPointsToCursor[line];
+        this.mainCtx.beginPath();
+        this.mainCtx.strokeStyle = color;
+        this.mainCtx.arc(point.x, point.y, 4, 0, degrees360);
+        this.mainCtx.stroke();
 
-      this.mainCtx.beginPath();
-      this.mainCtx.lineWidth = width;
-      if (pos < (this.drawableWidth - 200)) {
-        this.mainCtx.fillStyle = "black";
-        this.mainCtx.fillRect(pos + 20, topPadding, 60, height);
-        this.mainCtx.fillStyle = fontColor;
-        this.mainCtx.font = `14px sans-serif`;
-        this.mainCtx.fillText(`${point.original.temperature.toFixed(2)}°F`, pos + 20 + 5, topPadding + height - 5);
-      } else {
-        this.mainCtx.fillStyle = "black";
-        this.mainCtx.fillRect(pos - (20 + 60), topPadding, 60, height);
-        this.mainCtx.fillStyle = fontColor;
-        this.mainCtx.font = `14px sans-serif`;
-        this.mainCtx.fillText(`${point.original.temperature.toFixed(2)}°F`, pos - (20 + 60) + 5, topPadding + height - 5);
-      }
+        this.mainCtx.beginPath();
+        this.mainCtx.lineWidth = width;
+        if (pos < (this.drawableWidth - tooltipTurnaroundPx)) {
+          this.mainCtx.fillStyle = tooltipBackground;
+          this.mainCtx.fillRect(pos + tooltipDistanceFromCursor, topPadding, tooltipWidth, height);
+          this.mainCtx.fillStyle = fontColor;
+          this.mainCtx.font = tooltipFont;
+          this.mainCtx.fillText(
+            `${point.original.temperature.toFixed(2)}°F`,
+            pos + tooltipDistanceFromCursor + tooltipInnerPadding,
+            topPadding + height - tooltipInnerPadding
+          );
+        } else {
+          this.mainCtx.fillStyle = tooltipBackground;
+          this.mainCtx.fillRect(pos - (tooltipDistanceFromCursor + tooltipWidth), topPadding, tooltipWidth, height);
+          this.mainCtx.fillStyle = fontColor;
+          this.mainCtx.font = tooltipFont;
+          this.mainCtx.fillText(
+            `${point.original.temperature.toFixed(2)}°F`,
+            pos - (tooltipDistanceFromCursor + tooltipWidth) + tooltipInnerPadding,
+            topPadding + height - tooltipInnerPadding
+          );
+        }
 
-      this.mainCtx.stroke();
+        this.mainCtx.stroke();
 
-      topPadding = topPadding + separationPadding + height;
-    });
+        topPadding = topPadding + separationPadding + height;
+      });
   }
 }
-
-// TODO:
-// Navigation
-// Separate line colors and text colors
-// Move constants to style

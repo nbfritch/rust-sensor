@@ -1,7 +1,5 @@
-use actix_web::web;
-use actix_web::HttpResponse;
+use actix_web::{web, HttpResponse};
 use serde_json::json;
-
 use crate::models::CurrentReadingModel;
 
 pub async fn index(

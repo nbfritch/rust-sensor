@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
-
 #[derive(Serialize, Deserialize)]
 pub struct CurrentReadingModel {
     pub id: i64,

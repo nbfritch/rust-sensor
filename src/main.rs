@@ -4,26 +4,19 @@ mod routes;
 mod state;
 mod types;
 mod url;
-use crate::routes::index::index;
-use crate::state::AppStateStruct;
+use crate::{routes::index::index, state::AppStateStruct};
 use actix_cors;
-use actix_web::middleware::Logger;
-use actix_web::web::{self, Data};
-use actix_web::{App, HttpServer};
+use actix_web::{App, HttpServer, middleware::Logger, web::{self, Data}};
 use actix_web_static_files::ResourceFiles;
-use routes::graph::{graph_data, graph_page};
-use routes::history::{historical_graph, history_page};
-use routes::readings::create_reading;
+use routes::{graph::{graph_data, graph_page}, history::{historical_graph, history_page}, readings::create_reading};
 use url::build_href_for;
 use sqlx::postgres::PgPoolOptions;
 use std::path::Path;
 
-// Include static assets from /public
 include!(concat!(env!("OUT_DIR"), "/generated.rs"));
 
 #[tokio::main]
 async fn main() {
-    // Only use dotenvy for dev builds
     if cfg!(debug_assertions) {
         dotenvy::dotenv().expect("Failed to load dotenv");
     }

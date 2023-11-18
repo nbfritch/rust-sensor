@@ -1,13 +1,8 @@
 use std::collections::HashMap;
-
-use actix_web::web;
-use actix_web::HttpResponse;
+use actix_web::{web, HttpResponse};
 use serde::Deserialize;
 use serde_json::json;
-
-use crate::models::GraphReadingRow;
-use crate::types::GraphPoint;
-use crate::types::SensorLine;
+use crate::{models::GraphReadingRow, types::{GraphPoint, SensorLine}};
 
 #[derive(Clone, Deserialize)]
 pub struct HistoryQueryInfo {

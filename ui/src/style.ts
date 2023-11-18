@@ -24,6 +24,17 @@ export interface IGraphStyle {
   yAxisLineStyle?: ILineStyle;
   yAxisLegendStyle: ITextStyle;
   dataLineStyle: Record<string, ILineStyle>;
+  tooltipTopMargin: number;
+  tooltipHeight: number;
+  tooltipSeparation: number;
+  tooltipWidth: number;
+  tooltipDateWidth: number;
+  tooltipInnerPadding: number;
+  tooltipTurnaroundPx: number;
+  tooltipDistanceFromCursor: number;
+  tooltipDateColor: string;
+  tooltipFont: string;
+  tooltipBackground: string;
 }
 
 export const defaultGraphStyle: IGraphStyle = {
@@ -87,4 +98,15 @@ export const defaultGraphStyle: IGraphStyle = {
       width: 2,
     }
   },
+  tooltipTopMargin: 10,
+  tooltipHeight: 20,
+  tooltipSeparation: 10,
+  tooltipWidth: 60,
+  tooltipDateWidth: 110,
+  tooltipInnerPadding: 5,
+  tooltipTurnaroundPx: 200,
+  tooltipDistanceFromCursor: 20,
+  tooltipDateColor: 'red',
+  tooltipFont: '14px sans-serif',
+  tooltipBackground: 'black',
 };

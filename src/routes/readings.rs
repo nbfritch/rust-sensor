@@ -1,7 +1,4 @@
-use actix_web::put;
-use actix_web::web;
-use actix_web::HttpResponse;
-use actix_web::web::Json;
+use actix_web::{put, web::{self, Json}, HttpResponse};
 use serde_json::json;
 
 use crate::types::CreateReadingRequest;

@@ -5,6 +5,5 @@ SENSOR_NAME="\"outsidepi\""
 JSON="'{\"sensorName\": $SENSOR_NAME, \"temperature\": 63.33 }'"
 
 echo "$JSON"
-#sh -c "curl -X PUT $DATA_URL -H 'Content-Type: application/json' -d $JSON"
 
 curl -X PUT 'http://localhost:4000/api/readings' -H 'Content-Type: application/json' -d "{\"temperature\": 72.39, \"sensorName\": \"office\"}"
