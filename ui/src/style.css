@@ -50,3 +50,11 @@ main {
   height: 100%;
   width: 8%;
 }
+
+#app-footer {
+  display: flex;
+}
+
+.graph-legend {
+  padding-right: 10px;
+}

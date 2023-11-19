@@ -4,7 +4,7 @@ import './bulma.min.css'
 
 const searchBarId = 'history-search';
 
-type ApiResponse = Array<{id: string, points: Array<TemperatureTimePoint>}>
+type ApiResponse = Array<{id: string; name: string; description: string; points: Array<TemperatureTimePoint>}>
 
 const fetchData = async (timespan: string): Promise<ApiResponse> => {
   const graphDataResponse = await fetch(`/api/graph?last=${timespan}`, {headers: {mode: 'no-cors'}});
@@ -23,7 +23,7 @@ const setSearchbarStyle = () => {
   if (searchBar != null) {
     hashValue.includes('history') ? searchBar.setAttribute("style", '') : searchBar.setAttribute('style', 'display: none');
   }
-}
+};
 
 const readHash = () => {
   return window.location.hash.replace('#', '');
@@ -158,6 +158,7 @@ const main = async () => {
 
   graphRenderer.ingestData(graphData);
   graphRenderer.render();
+  graphRenderer.drawLegend(graphData);
 };
 
 document.addEventListener('DOMContentLoaded', async () => {

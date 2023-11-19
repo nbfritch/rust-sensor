@@ -404,4 +404,41 @@ export class CanvasLineGraphRenderer {
         topPadding = topPadding + separationPadding + height;
       });
   }
+
+  public drawLegend(data: Array<{ id: string; name: string; description: string }>) {
+    const legendContainer = document.getElementById("app-footer");
+    if (legendContainer == null) {
+      throw new Error("Cannot find legend container");
+    }
+
+    data.forEach(sensor => {
+      const color = this.style.dataLineStyle[sensor.id].color;
+      const legendId = `legend-${sensor.id}`;
+      const legendEl = document.createElement("div");
+      legendEl.setAttribute("id", legendId);
+      legendEl.classList.add("graph-legend");
+      legendContainer.appendChild(legendEl);
+
+      const swatch = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      swatch.setAttribute("id", `legend-swatch-${sensor.id}`);
+      swatch.setAttribute("height", "16");
+      swatch.setAttribute("width", "26");
+      legendEl.appendChild(swatch);
+
+      const swatchRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      swatchRect.setAttribute("x", "0");
+      swatchRect.setAttribute("y", "0");
+      swatchRect.setAttribute("height", "16");
+      swatchRect.setAttribute("width", "16");
+      swatchRect.setAttribute("fill", color);
+      swatchRect.setAttribute("stroke", "black");
+      swatchRect.setAttribute("stroke-width", "1");
+
+      swatch.appendChild(swatchRect);
+
+      const sensorNameEl = document.createElement("span");
+      sensorNameEl.innerText = `${sensor.description} `;
+      legendEl.appendChild(sensorNameEl);
+    });
+  };
 }
