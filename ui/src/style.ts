@@ -74,7 +74,7 @@ export const defaultGraphStyle: IGraphStyle = {
   yAxisLegendStyle: {
     color: 'rgb(20, 20, 20)',
     font: 'sans-serif',
-    size: 20,
+    size: 12,
   },
   dataLineStyle: {
     "1": {
