@@ -11,12 +11,6 @@ pub struct HistoryQueryInfo {
     day: i32,
 }
 
-pub async fn history_page(state: web::Data<crate::state::AppState>) -> super::EventResponse {
-    let mut ctx = tera::Context::new();
-    ctx.insert("show_date", &true);
-    state.render_template("graph.j2", &mut ctx)
-}
-
 pub async fn historical_graph(
     pool: web::Data<sqlx::PgPool>,
     query_params: web::Query<HistoryQueryInfo>,

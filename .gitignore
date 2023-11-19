@@ -1,3 +1,5 @@
 /target
 .env
-/public/css/bulma.min.css
+rust_sensor.tar.gz
+/node_modules
+/release

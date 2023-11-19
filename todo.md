@@ -1,6 +1,5 @@
-# TODO (Pre release):
-- Update dependencies
-- Bump version
 
-# TODO (Later)
+# TODO
+- css media query for desktop vs mobile unit-canvas width
+- Better error logging
 - Runtime configurable style

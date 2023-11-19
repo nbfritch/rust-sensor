@@ -1,0 +1,14 @@
+{
+  "name": "rust-sensor",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "scripts": {
+    "release": "bun run gen_release.ts"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

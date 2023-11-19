@@ -18,7 +18,6 @@ const fetchHistory = async (year: string, month: string, day: string): Promise<A
 
 const setSearchbarStyle = () => {
   const hashValue = readHash();
-  console.log(hashValue);
   const searchBar = document.getElementById(searchBarId);
   if (searchBar != null) {
     hashValue.includes('history') ? searchBar.setAttribute("style", '') : searchBar.setAttribute('style', 'display: none');
@@ -67,7 +66,6 @@ const main = async () => {
 
   window.addEventListener('hashchange', async () => {
     const hashValue = readHash();
-    console.log(hashValue);
     setSearchbarStyle();
 
     if (hashValue.includes('history=')) {

@@ -8,7 +8,7 @@ use crate::{routes::index::index, state::AppStateStruct};
 use actix_cors;
 use actix_web::{App, HttpServer, middleware::Logger, web::{self, Data}};
 use actix_web_static_files::ResourceFiles;
-use routes::{graph::{graph_data, graph_page}, history::{historical_graph, history_page}, readings::create_reading};
+use routes::{graph::{graph_data, graph_page}, history::historical_graph, readings::create_reading};
 use url::build_href_for;
 use sqlx::postgres::PgPoolOptions;
 use std::path::Path;
@@ -67,7 +67,6 @@ async fn main() {
             .service(create_reading)
             .route("/graph", web::get().to(graph_page))
             .route("/api/graph", web::get().to(graph_data))
-            .route("/history", web::get().to(history_page))
             .route("/api/history", web::get().to(historical_graph))
             .app_data(Data::new(state))
             .app_data(Data::new(pool.clone()))
