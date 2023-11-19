@@ -9,6 +9,10 @@ p {
   padding: 0;
 }
 
+nav {
+  height: 3.25rem;
+}
+
 body {
   width: 100%;
   height: 100%;
@@ -24,7 +28,7 @@ header {
 footer {
   width: 100%;
   height: 3.25rem;
-  background-color: cornflowerblue;
+  background-color: whitesmoke;
   position: absolute;
   bottom: 0;
 }

@@ -7,11 +7,55 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="data:;base64,=">
   <link rel="stylesheet" href="/static/{{ href_for(filename="index.css") }}">
+  <script>
+    const burgerId = 'burger';
+    const mainNavId = 'mainNavbar';
+    const navDropdownId = 'nav-dropdown';
+
+    const unregisterHandleCancel = () => {
+      document.removeEventListener('click', handleCancelMenu);
+    };
+
+    const handleCancelMenu = (ev) => {
+      if (ev.defaultPrevented) {
+        return;
+      }
+
+      const burgerElement = document.getElementById(burgerId);
+      const mainNav = document.getElementById(mainNavId);
+      burgerElement.classList.remove("is-active");
+      mainNav.classList.remove("is-active");
+      unregisterHandleCancel();
+    };
+
+    document.addEventListener('DOMContentLoaded', (_e) => {
+      const burgerElement = document.getElementById(burgerId);
+      const dropdown = document.getElementById("nav-dropdown");
+      let enabled = false;
+      burgerElement.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        const target = document.getElementById(mainNavId);
+        target.classList.add('is-active');
+        burgerElement.classList.add('is-active');
+        document.addEventListener('click', handleCancelMenu);
+      });
+
+      window.addEventListener('hashchange', async () => {
+        burgerElement.classList.remove("is-active");
+        dropdown.classList.remove("is-active");
+      });
+    });
+
+  </script>
 </head>
 
 <body>
   <nav id="app-nav" class="navbar is-link" role="navigation">
     <div class="navbar-brand">
+      <div id="history-search" class="navbar-item">
+        <input id="date-input" class="input" type="date" />
+        <button id="search-button" class="button is-primary">Search</button>
+      </div>
       <a id="burger" role="button" class="navbar-burger" aria-label="menu" aria-expanded="false"
         data-target="mainNavbar">
         <span aria-hidden="true"></span>
@@ -31,7 +75,7 @@
             <a class="navbar-item" href="/graph#month">Month</a>
           </div>
         </div>
-        <a class="navbar-item" href="/history">History</a>
+        <a class="navbar-item" href="/graph#history">History</a>
       </div>
     </div>
   </nav>

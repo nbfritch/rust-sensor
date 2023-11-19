@@ -2,12 +2,28 @@ import { CanvasLineGraphRenderer, TemperatureTimePoint } from './graph';
 import './style.css'
 import './bulma.min.css'
 
+const searchBarId = 'history-search';
+
 type ApiResponse = Array<{id: string, points: Array<TemperatureTimePoint>}>
 
 const fetchData = async (timespan: string): Promise<ApiResponse> => {
   const graphDataResponse = await fetch(`/api/graph?last=${timespan}`, {headers: {mode: 'no-cors'}});
-    return (await graphDataResponse.json()) as ApiResponse;
+  return (await graphDataResponse.json()) as ApiResponse;
 };
+
+const fetchHistory = async (year: string, month: string, day: string): Promise<ApiResponse> => {
+  const graphDataResponse = await fetch(`/api/history?year=${year}&month=${month}&day=${day}`, {headers: {mode: 'no-cors'}});
+  return (await graphDataResponse.json()) as ApiResponse;
+};
+
+const setSearchbarStyle = () => {
+  const hashValue = readHash();
+  console.log(hashValue);
+  const searchBar = document.getElementById(searchBarId);
+  if (searchBar != null) {
+    hashValue.includes('history') ? searchBar.setAttribute("style", '') : searchBar.setAttribute('style', 'display: none');
+  }
+}
 
 const readHash = () => {
   return window.location.hash.replace('#', '');
@@ -29,6 +45,8 @@ const stepSizeForHash = (hash: string): number => {
 };
 
 const main = async () => {
+  setSearchbarStyle();
+
   const mainCanvas = document.getElementById('main-canvas') as HTMLCanvasElement | null;
   if (mainCanvas == null) {
     throw new Error('Could not find #main-canvas');
@@ -49,10 +67,27 @@ const main = async () => {
 
   window.addEventListener('hashchange', async () => {
     const hashValue = readHash();
-    const d = await fetchData(hashValue);
-    const stepSize = stepSizeForHash(hashValue);
-    graphRenderer.setStepsize(stepSize);
-    graphRenderer.ingestData(d);
+    console.log(hashValue);
+    setSearchbarStyle();
+
+    if (hashValue.includes('history=')) {
+      const dateInput = document.getElementById('date-input') as HTMLInputElement | null;
+      if (dateInput == null) {
+        throw new Error('couldnt get date input');
+      }
+      const [year, month, day] = dateInput.value.split("-");
+      const d = await fetchHistory(year, month, day);
+      const stepSize = stepSizeForHash(hashValue);
+      graphRenderer.setStepsize(stepSize);
+      graphRenderer.ingestData(d);
+      graphRenderer.render();
+    } else {
+      const d = await fetchData(hashValue);
+      const stepSize = stepSizeForHash(hashValue);
+      graphRenderer.setStepsize(stepSize);
+      graphRenderer.ingestData(d);
+      graphRenderer.render();
+    }
   });
 
   graphRenderer.render();
@@ -107,7 +142,22 @@ const main = async () => {
     }, 50);
   });
 
+  const searchButton = document.getElementById('search-button');
+  if (searchButton != null) {
+    searchButton.addEventListener('click', () => {
+      const dateInput = document.getElementById('date-input') as HTMLInputElement | null;
+      if (dateInput == null) {
+        throw new Error("Couldn't find date-input");
+      }
+
+      const dateParts = dateInput.value.split("-");
+      const [year, month, day] = dateParts;
+      window.location.hash = `#history=${year}-${month}-${day}`;
+    });
+  }
+
   graphRenderer.ingestData(graphData);
+  graphRenderer.render();
 };
 
 document.addEventListener('DOMContentLoaded', async () => {

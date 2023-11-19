@@ -1,7 +1,7 @@
 # TODO (Pre release):
-- Implement history
 - Fix y-units clipping on mobile
 - Update dependencies
+- Add legend to graph
 - Bump version
 
 # TODO (Later)
