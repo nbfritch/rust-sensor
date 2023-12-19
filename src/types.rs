@@ -11,7 +11,7 @@ pub struct SensorLine {
     pub id: i64,
     pub name: String,
     pub description: String,
-    pub points: Vec<GraphPoint>
+    pub points: Vec<GraphPoint>,
 }
 
 #[derive(Deserialize)]

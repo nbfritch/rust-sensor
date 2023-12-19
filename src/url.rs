@@ -15,7 +15,7 @@ pub fn build_href_for(resource_keys: Vec<String>) -> impl Function {
                         Some(s) => {
                             println!("Coercing {v} to {s}");
                             Ok(s.clone().into())
-                        },
+                        }
                         None => Err("Oup".into()),
                     }
                 }

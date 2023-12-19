@@ -11,7 +11,6 @@ pub struct CurrentReadingModel {
     pub reading_date: Option<i64>,
 }
 
-
 #[derive(Debug, FromRow, Deserialize, Serialize)]
 pub struct GraphReadingRow {
     pub id: i64,
