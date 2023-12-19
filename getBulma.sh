@@ -1,2 +1,2 @@
 #/usr/bin/env sh
-curl https://raw.githubusercontent.com/jgthms/bulma/master/css/bulma.min.css > public/css/bulma.min.css
+curl https://raw.githubusercontent.com/jgthms/bulma/master/css/bulma.min.css > ui/src/bulma.min.css
