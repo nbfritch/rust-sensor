@@ -5,13 +5,20 @@ mod state;
 mod types;
 mod url;
 use crate::{routes::index::index, state::AppStateStruct};
-use actix_cors;
-use actix_web::{App, HttpServer, middleware::Logger, web::{self, Data}};
+use actix_web::{
+    middleware::Logger,
+    web::{self, Data},
+    App, HttpServer,
+};
 use actix_web_static_files::ResourceFiles;
-use routes::{graph::{graph_data, graph_page}, history::historical_graph, readings::create_reading};
-use url::build_href_for;
+use routes::{
+    graph::{graph_data, graph_page},
+    history::historical_graph,
+    readings::create_reading,
+};
 use sqlx::postgres::PgPoolOptions;
 use std::path::Path;
+use url::build_href_for;
 
 include!(concat!(env!("OUT_DIR"), "/generated.rs"));
 
@@ -44,7 +51,10 @@ async fn main() {
     HttpServer::new(move || {
         let cors = actix_cors::Cors::permissive();
         let generated = generate();
-        let available_files = generated.keys().map(|k| String::from(*k)).collect::<Vec<_>>();
+        let available_files = generated
+            .keys()
+            .map(|k| String::from(*k))
+            .collect::<Vec<_>>();
         let state = std::sync::Arc::new(AppStateStruct::new({
             let mut tera = tera::Tera::new(
                 &(template_folder

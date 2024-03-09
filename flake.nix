@@ -26,6 +26,8 @@
             buildInputs = [
               rustToolchain
               bun
+              bashInteractive
+              sqlx-cli
             ];
           };
         }

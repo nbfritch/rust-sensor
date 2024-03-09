@@ -1,6 +1,7 @@
-pub mod index;
 pub mod graph;
 pub mod history;
+pub mod index;
 pub mod readings;
+pub mod station;
 
 pub type EventResponse = Result<actix_web::HttpResponse, crate::errors::EventError>;
