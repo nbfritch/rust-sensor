@@ -29,8 +29,8 @@ pub struct CreateStationResult {
 #[derive(Deserialize)]
 pub struct UpdateStationRequest {
     pub id: i32,
-    pub station_name: Option<String>,
-    pub station_display_name: Option<String>,
+    pub station_name: String,
+    pub station_display_name: String,
     pub station_description: Option<String>,
 }
 

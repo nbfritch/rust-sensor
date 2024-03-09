@@ -1,4 +1,4 @@
-use actix_web::post;
+use actix_web::{post, put};
 use actix_web::{
     get,
     web::{self, Json},
@@ -7,7 +7,7 @@ use actix_web::{
 use serde_json::json;
 use sqlx::{pool::PoolConnection, Postgres};
 
-use crate::models::{CreateStationRequest, CreateStationResult, Station};
+use crate::models::{CreateStationRequest, CreateStationResult, Station, UpdateStationRequest};
 
 #[get("/api/stations")]
 pub async fn get_all_stations(pool: web::Data<sqlx::PgPool>) -> super::EventResponse {
@@ -38,13 +38,9 @@ pub async fn get_all_stations(pool: web::Data<sqlx::PgPool>) -> super::EventResp
     Ok(HttpResponse::Ok().json(stations))
 }
 
-#[get("/api/stations/{station_id}")]
-pub async fn get_station_by_id(
-    pool: web::Data<sqlx::PgPool>,
-    path: web::Path<i32>) -> super::EventResponse {
-    let station_id = path.into_inner();
-    let mut conn = pool.acquire().await?;
-    let found_station = sqlx::query!("
+async fn find_station_by_id(conn: &mut PoolConnection<Postgres>,
+    station_id: i32) -> Result<Option<Station>, sqlx::Error> {
+    sqlx::query!("
         select
             id,
             station_name,
@@ -64,7 +60,16 @@ pub async fn get_station_by_id(
         updated_at: s.updated_at
     })
     .fetch_optional(conn.as_mut())
-    .await?;
+    .await
+}
+
+#[get("/api/stations/{station_id}")]
+pub async fn get_station_by_id(
+    pool: web::Data<sqlx::PgPool>,
+    path: web::Path<i32>) -> super::EventResponse {
+    let station_id = path.into_inner();
+    let mut conn = pool.acquire().await?;
+    let found_station = find_station_by_id(&mut conn, station_id).await?;
 
     Ok(match found_station {
         Some(station) => {
@@ -143,3 +148,57 @@ pub async fn create_station(
     }
 }
 
+#[put("/api/stations")]
+pub async fn update_station(
+    pool: web::Data<sqlx::PgPool>,
+    Json(update_station_req): web::Json<UpdateStationRequest>,
+) -> super::EventResponse {
+    if update_station_req.station_name.len() < 2 || update_station_req.station_display_name.len() < 2 {
+        return Ok(HttpResponse::BadRequest().json(json!({
+            "status": "error",
+            "message": "Station names must be longer than 2 characters",
+        })));
+    }
+    let mut conn = pool.acquire().await?;
+    let found_station = find_station_by_id(&mut conn, update_station_req.id).await?;
+
+    if found_station.is_none() {
+        return Ok(HttpResponse::NotFound().json(json!({
+            "status": "error",
+            "message": format!("Station with id {} not found", update_station_req.id),
+        })));
+    }
+
+    let old_station = found_station.unwrap();
+    if old_station.station_name != update_station_req.station_name {
+        let named_station = find_station_by_name(&mut conn, &update_station_req.station_name).await?;
+        if let Some(found_named_station) = named_station {
+            return Ok(HttpResponse::BadRequest().json(json!({
+                "status": "error",
+                "message": format!("Name {} conflicts with station of id {} also named {}", found_named_station.station_name, found_named_station.id, found_named_station.station_name),
+            })));
+        }
+    }
+
+    sqlx::query!("
+        update monitor.stations
+        set
+            station_name = $2,
+            station_display_name = $3,
+            station_description = $4,
+            updated_at = current_timestamp
+        where
+            id = $1
+    ", update_station_req.id, update_station_req.station_name, update_station_req.station_display_name, update_station_req.station_description)
+    .execute(conn.as_mut()).await?;
+
+    let updated_station = find_station_by_id(&mut conn, update_station_req.id).await?;
+
+    Ok(match updated_station {
+        Some(station) => HttpResponse::Ok().json(station),
+        None => HttpResponse::NotFound().json(json!({
+            "status": "error",
+            "message": "Not found",
+        }))
+    })
+}
