@@ -1,4 +1,4 @@
-use actix_web::{patch, post};
+use actix_web::post;
 use actix_web::{
     get,
     web::{self, Json},
@@ -10,13 +10,16 @@ use sqlx::{pool::PoolConnection, Postgres};
 use crate::models::{CreateStationRequest, CreateStationResult, Station};
 
 #[get("/api/stations")]
-pub async fn list_stations(pool: web::Data<sqlx::PgPool>) -> super::EventResponse {
+pub async fn get_all_stations(pool: web::Data<sqlx::PgPool>) -> super::EventResponse {
     let mut conn = pool.acquire().await?;
-    let stations = sqlx::query!(
-        "
+    let stations = sqlx::query!("
         select
-            id, station_name, station_display_name,
-            station_description, created_at, updated_at
+            id,
+            station_name,
+            station_display_name,
+            station_description,
+            created_at,
+            updated_at
         from monitor.stations
         order by id asc
     "
@@ -35,13 +38,59 @@ pub async fn list_stations(pool: web::Data<sqlx::PgPool>) -> super::EventRespons
     Ok(HttpResponse::Ok().json(stations))
 }
 
+#[get("/api/stations/{station_id}")]
+pub async fn get_station_by_id(
+    pool: web::Data<sqlx::PgPool>,
+    path: web::Path<i32>) -> super::EventResponse {
+    let station_id = path.into_inner();
+    let mut conn = pool.acquire().await?;
+    let found_station = sqlx::query!("
+        select
+            id,
+            station_name,
+            station_display_name,
+            station_description,
+            created_at,
+            updated_at
+        from monitor.stations
+        where id = $1
+    ", station_id)
+    .map(|s| Station {
+        id: s.id,
+        station_name: s.station_name,
+        station_display_name: s.station_display_name,
+        station_description: s.station_description,
+        created_at: s.created_at,
+        updated_at: s.updated_at
+    })
+    .fetch_optional(conn.as_mut())
+    .await?;
+
+    Ok(match found_station {
+        Some(station) => {
+            HttpResponse::Ok().json(station)
+        },
+        None => {
+            HttpResponse::NotFound().json(json!({
+                "status": "error",
+                "message": format!("Station with id {} not found", station_id),
+            }))
+        }
+    })
+}
+
 async fn find_station_by_name(
     db: &mut PoolConnection<Postgres>,
     name: &String,
 ) -> Result<Option<Station>, sqlx::Error> {
-    sqlx::query!(
-        "
-        select id, station_name, station_display_name, station_description, created_at, updated_at
+    sqlx::query!("
+        select
+            id,
+            station_name,
+            station_display_name,
+            station_description,
+            created_at,
+            updated_at
         from monitor.stations
         where station_name = $1
         limit 1
@@ -71,7 +120,7 @@ pub async fn create_station(
             "message": "Names must be longer than 2 characters"
         })));
     }
-    
+
     let mut conn = pool.acquire().await?;
     let existing_station = find_station_by_name(&mut conn, &create_station_req.station_name).await?;
     match existing_station {

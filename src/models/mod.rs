@@ -34,6 +34,7 @@ pub struct UpdateStationRequest {
     pub station_description: Option<String>,
 }
 
+#[derive(Serialize)]
 pub struct MeasurementType {
     pub id: i32,
     pub name: String,
