@@ -40,6 +40,17 @@ pub struct MeasurementType {
     pub name: String,
 }
 
+#[derive(Deserialize)]
+pub struct CreateMeasurementTypeRequest {
+    pub name: String,
+}
+
+#[derive(Deserialize)]
+pub struct UpdateMeasurementTypeRequest {
+    pub id: i32,
+    pub name: String,
+}
+
 #[derive(Serialize)]
 pub struct Sensor {
     pub id: i32,

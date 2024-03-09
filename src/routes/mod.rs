@@ -1,6 +1,7 @@
 pub mod graph;
 pub mod history;
 pub mod index;
+pub mod measurement_type;
 pub mod readings;
 pub mod station;
 
