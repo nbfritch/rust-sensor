@@ -74,8 +74,8 @@ pub struct CreateSensorResult {
 #[derive(Deserialize)]
 pub struct UpdateSensorRequest {
     pub id: i32,
-    pub sensor_name: Option<String>,
-    pub measurement_type_id: Option<i32>,
+    pub sensor_name: String,
+    pub measurement_type_id: i32,
 }
 
 #[derive(Serialize)]
