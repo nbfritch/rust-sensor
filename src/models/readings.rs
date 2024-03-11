@@ -20,17 +20,6 @@ pub enum ReadingType {
     LightLevel = 3,
 }
 
-impl ReadingType {
-    pub fn from_int(x: i32) -> Option<Self> {
-        match x {
-            1 => Some(Self::Temperature),
-            2 => Some(Self::RelativeHumidity),
-            3 => Some(Self::LightLevel),
-            _ => None
-        }
-    }
-}
-
 #[derive(Serialize, Deserialize)]
 pub struct CurrentReadingModel {
     pub id: i64,
