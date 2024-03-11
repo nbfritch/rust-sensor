@@ -1,10 +1,10 @@
-import { CanvasLineGraphRenderer, TemperatureTimePoint } from './graph';
+import { CanvasLineGraphRenderer, ReadingTimePoint } from './graph';
 import './style.css'
 import './bulma.min.css'
 
 const searchBarId = 'history-search';
 
-type ApiResponse = Array<{id: string; name: string; description: string; points: Array<TemperatureTimePoint>}>
+type ApiResponse = Array<{id: string; name: string; description: string; points: Array<ReadingTimePoint>}>
 
 const fetchData = async (timespan: string): Promise<ApiResponse> => {
   const graphDataResponse = await fetch(`/api/graph?last=${timespan}`, {headers: {mode: 'no-cors'}});
