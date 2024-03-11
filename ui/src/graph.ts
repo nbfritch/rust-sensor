@@ -16,8 +16,8 @@ export interface IDataPoint<T> {
   original: T;
 }
 
-export interface TemperatureTimePoint {
-  temperature: number;
+export interface ReadingTimePoint {
+  reading_value: number;
   reading_date: number;
 }
 
@@ -55,7 +55,7 @@ export class CanvasLineGraphRenderer {
   private unitHeight: number;
   private mainCtx: CanvasRenderingContext2D;
   private unitCtx: CanvasRenderingContext2D;
-  private lineData: Record<string, Array<IDataPoint<TemperatureTimePoint>>> = {};
+  private lineData: Record<string, Array<IDataPoint<ReadingTimePoint>>> = {};
   private cursorPosition: number | null = null;
 
   constructor(
@@ -103,8 +103,8 @@ export class CanvasLineGraphRenderer {
     this.xAxisInterval = stepSize;
   }
 
-  public ingestData(data: Array<{ id: string, points: Array<TemperatureTimePoint> }>) {
-    let g: Record<string, Array<TemperatureTimePoint>> = {};
+  public ingestData(data: Array<{ id: string, points: Array<ReadingTimePoint> }>) {
+    let g: Record<string, Array<ReadingTimePoint>> = {};
     let minTime: number | null = null;
     let maxTime: number | null = null;
     let minTemp: number | null = null;
@@ -120,12 +120,12 @@ export class CanvasLineGraphRenderer {
           minTime = point.reading_date;
         }
 
-        if (maxTemp == null || point.temperature > maxTemp) {
-          maxTemp = point.temperature;
+        if (maxTemp == null || point.reading_value > maxTemp) {
+          maxTemp = point.reading_value;
         }
 
-        if (minTemp == null || point.temperature < minTemp) {
-          minTemp = point.temperature
+        if (minTemp == null || point.reading_value < minTemp) {
+          minTemp = point.reading_value
         }
       })
     });
@@ -146,7 +146,7 @@ export class CanvasLineGraphRenderer {
         return {
           original: point,
           x: this.projectX(point.reading_date),
-          y: this.projectY(point.temperature),
+          y: this.projectY(point.reading_value),
         };
       }).sort((a, b) => a.x - b.x);
     });
@@ -158,7 +158,7 @@ export class CanvasLineGraphRenderer {
         return {
           ...point,
           x: this.projectX(point.original.reading_date),
-          y: this.projectY(point.original.temperature),
+          y: this.projectY(point.original.reading_value),
         }
       }).sort((a, b) => a.x - b.x);
     });
@@ -311,7 +311,7 @@ export class CanvasLineGraphRenderer {
     }
     const pos = this.cursorPosition
     let hoveredDate: number | null = null;
-    let closestPointsToCursor: Record<string, IDataPoint<TemperatureTimePoint>> = {};
+    let closestPointsToCursor: Record<string, IDataPoint<ReadingTimePoint>> = {};
     Object.keys(this.lineData).forEach(line => {
       if (this.lineData[line].length > 0) {
         const point = this.lineData[line]
@@ -366,7 +366,7 @@ export class CanvasLineGraphRenderer {
 
     Object.keys(closestPointsToCursor)
       .sort((a, b) =>
-        closestPointsToCursor[b].original.temperature - closestPointsToCursor[a].original.temperature)
+        closestPointsToCursor[b].original.reading_value - closestPointsToCursor[a].original.reading_value)
       .forEach(line => {
         const { color, fontColor, width } = (this.style.dataLineStyle[line] ?? this.style.defaultLineStyle);
         const point = closestPointsToCursor[line];
@@ -383,7 +383,7 @@ export class CanvasLineGraphRenderer {
           this.mainCtx.fillStyle = fontColor;
           this.mainCtx.font = tooltipFont;
           this.mainCtx.fillText(
-            `${point.original.temperature.toFixed(2)}°F`,
+            `${point.original.reading_value.toFixed(2)}°F`,
             pos + tooltipDistanceFromCursor + tooltipInnerPadding,
             topPadding + height - tooltipInnerPadding
           );
@@ -393,7 +393,7 @@ export class CanvasLineGraphRenderer {
           this.mainCtx.fillStyle = fontColor;
           this.mainCtx.font = tooltipFont;
           this.mainCtx.fillText(
-            `${point.original.temperature.toFixed(2)}°F`,
+            `${point.original.reading_value.toFixed(2)}°F`,
             pos - (tooltipDistanceFromCursor + tooltipWidth) + tooltipInnerPadding,
             topPadding + height - tooltipInnerPadding
           );

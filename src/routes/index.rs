@@ -13,7 +13,7 @@ pub async fn index(
         s.id,
         s.name,
         s.description,
-        r.temperature,
+        r.reading_value,
         abs(round(
             extract(epoch from ((current_timestamp at time zone 'utc') - reading_date)) / 60))::bigint
             as minutes_ago,
@@ -31,7 +31,7 @@ pub async fn index(
         id: x.id,
         name: x.name,
         description: x.description,
-        temperature: x.temperature,
+        reading_value: x.reading_value,
         minutes_ago: x.minutes_ago,
         reading_date: x.reading_date,
     }).fetch_all(conn.as_mut())

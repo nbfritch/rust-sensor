@@ -68,10 +68,10 @@ pub async fn graph_data(
             s.name,
             s.description,
             floor(i.reading_date)::bigint as reading_date,
-            avg(i.temperature) as temperature
+            avg(i.reading_value) as reading_value
         from (
             select
-            r.temperature as temperature,
+            r.reading_value as reading_value,
             r.sensor_id,
             (
             floor(
@@ -97,7 +97,7 @@ pub async fn graph_data(
         id: x.id,
         name: x.name,
         description: x.description,
-        temperature: x.temperature,
+        reading_value: x.reading_value,
         reading_date: x.reading_date,
     })
     .fetch_all(conn.as_mut())
@@ -117,9 +117,9 @@ pub async fn graph_data(
             points: Vec::new(),
         });
 
-        if el.temperature.is_some() && el.reading_date.is_some() {
+        if el.reading_value.is_some() && el.reading_date.is_some() {
             line.points.push(GraphPoint {
-                temperature: el.temperature.unwrap(),
+                reading_value: el.reading_value.unwrap(),
                 reading_date: el.reading_date.unwrap(),
             });
         }

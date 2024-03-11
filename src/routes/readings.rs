@@ -8,9 +8,9 @@ pub async fn create_reading(
     pool: web::Data<sqlx::PgPool>,
     Json(create_reading_request): web::Json<CreateReadingRequest>,
 ) -> super::EventResponse {
-    if create_reading_request.temperature <= 0.0f64 || create_reading_request.temperature >= 120.0f64 {
+    if create_reading_request.reading_value <= 0.0f64 || create_reading_request.reading_value >= 120.0f64 {
         return Ok(HttpResponse::BadRequest()
-            .json(json!({"status": "error","message": "Temperature out of range"})));
+            .json(json!({"status": "error","message": "Value out of range"})));
     }
 
     if create_reading_request.sensor_name.len() <= 2 {
@@ -31,8 +31,8 @@ pub async fn create_reading(
     }
 
     let insert_result = sqlx::query!("
-        insert into readings (temperature, sensor_id) values ($1, $2) returning id
-    ", create_reading_request.temperature, sensor_id.unwrap())
+        insert into readings (reading_value, sensor_id) values ($1, $2) returning id
+    ", create_reading_request.reading_value, sensor_id.unwrap())
         .map(|x| x.id)
         .fetch_one(conn.as_mut()).await;
 

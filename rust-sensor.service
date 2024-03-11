@@ -1,5 +1,5 @@
 [Unit]
-Description=Temperature viewing application
+Description=Sensor viewing application
 
 [Service]
 WorkingDirectory=/usr/local/rust-sensor
