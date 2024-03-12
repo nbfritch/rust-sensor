@@ -6,7 +6,7 @@ Tembos
 {% block content %}
 <main id="app-main">
   <div class="container has-text-centered">
-    <h1 class="is-size-1">Current Temps:</h1>
+    <h1 class="is-size-1">Current Readings:</h1>
     {% for reading in current_readings %}
       <div>
         <h2 class="is-size-2">
@@ -14,10 +14,13 @@ Tembos
         </h2>
         <p>aka {{reading.name}}</p>
         <p>
-          {{reading.reading_value}}°F {{reading.minutes_ago}} minutes ago
+          {{reading.reading_value}}{{reading.reading_type_label}} {{reading.minutes_ago}} minutes ago
         </p>
       </div>
     {% endfor %}
+    {% if current_readings | length == 0 %}
+      <p>No readings in the last 24 hours</p>
+    {% endif %}
   </div>
 </main>
 {% endblock content %}

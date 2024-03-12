@@ -19,4 +19,5 @@ pub struct CreateReadingRequest {
     pub reading_value: f64,
     #[serde(rename = "sensorName")]
     pub sensor_name: String,
+    pub reading_type: i32,
 }

@@ -2,6 +2,7 @@ use actix_web::{put, web::{self, Json}, HttpResponse};
 use serde_json::json;
 
 use crate::types::CreateReadingRequest;
+use crate::models::ReadingType;
 
 #[put("/api/readings{tail}*")]
 pub async fn create_reading(
@@ -13,9 +14,9 @@ pub async fn create_reading(
             .json(json!({"status": "error","message": "Value out of range"})));
     }
 
-    if create_reading_request.sensor_name.len() <= 2 {
-        return Ok(HttpResponse::BadRequest()
-        .json(json!({"status": "error","message": "Sensor name too short"})));
+    let reading_type = ReadingType::from_int(create_reading_request.reading_type);
+    if reading_type.is_none() {
+        return Ok(HttpResponse::BadRequest().json(json!({"status": "error", "message": format!("Invalid reading type {}", create_reading_request.reading_type)})));
     }
 
     let mut conn = pool.acquire().await?;
@@ -31,8 +32,8 @@ pub async fn create_reading(
     }
 
     let insert_result = sqlx::query!("
-        insert into readings (reading_value, sensor_id) values ($1, $2) returning id
-    ", create_reading_request.reading_value, sensor_id.unwrap())
+        insert into readings (reading_value, sensor_id, reading_type) values ($1, $2, $3) returning id
+    ", create_reading_request.reading_value, sensor_id.unwrap(), create_reading_request.reading_type)
         .map(|x| x.id)
         .fetch_one(conn.as_mut()).await;
 
