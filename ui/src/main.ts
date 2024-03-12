@@ -2,25 +2,54 @@ import { CanvasLineGraphRenderer, ReadingTimePoint } from './graph';
 import './style.css'
 import './bulma.min.css'
 
+let refreshHandle: (() => void) | null = null;
+
+let readingType = 1;
 const searchBarId = 'history-search';
+const readingSelectId = 'readingTypeSelect';
+
+const bindSelect = () => {
+  const selectEl = "selel";
+  const readingSelectEl = document.getElementById(selectEl);
+  readingSelectEl?.addEventListener('input', (e) => {
+    console.log(`Got ${(e.target as HTMLSelectElement).value}`)
+    readingType = (e.target as HTMLSelectElement).value as unknown as number;
+    if (refreshHandle != null) {
+      refreshHandle();
+    }
+  });
+};
 
 type ApiResponse = Array<{id: string; name: string; description: string; points: Array<ReadingTimePoint>}>
 
 const fetchData = async (timespan: string): Promise<ApiResponse> => {
-  const graphDataResponse = await fetch(`/api/graph?last=${timespan}`, {headers: {mode: 'no-cors'}});
+  const graphDataResponse = await fetch(`/api/graph?last=${timespan}&reading_type=${readingType}`, {headers: {mode: 'no-cors'}});
   return (await graphDataResponse.json()) as ApiResponse;
 };
 
 const fetchHistory = async (year: string, month: string, day: string): Promise<ApiResponse> => {
-  const graphDataResponse = await fetch(`/api/history?year=${year}&month=${month}&day=${day}`, {headers: {mode: 'no-cors'}});
+  const graphDataResponse = await fetch(`/api/history?year=${year}&month=${month}&day=${day}&reading_type=${readingType}`, {headers: {mode: 'no-cors'}});
   return (await graphDataResponse.json()) as ApiResponse;
 };
 
 const setSearchbarStyle = () => {
   const hashValue = readHash();
   const searchBar = document.getElementById(searchBarId);
+  const readingSelect = document.getElementById(readingSelectId);
   if (searchBar != null) {
-    hashValue.includes('history') ? searchBar.setAttribute("style", '') : searchBar.setAttribute('style', 'display: none');
+    if (hashValue.includes('history')) {
+      searchBar.setAttribute("style", '');
+    } else {
+      searchBar.setAttribute('style', 'display: none');
+    }
+  }
+
+  if (readingSelect != null) {
+    if (['day', 'hour', 'week', 'month', 'history'].includes(hashValue)) {
+      readingSelect.setAttribute("style", '');
+    } else {
+      readingSelect.setAttribute('style', 'display: none');
+    }
   }
 };
 
@@ -45,6 +74,7 @@ const stepSizeForHash = (hash: string): number => {
 
 const main = async () => {
   setSearchbarStyle();
+  bindSelect();
 
   const mainCanvas = document.getElementById('main-canvas') as HTMLCanvasElement | null;
   if (mainCanvas == null) {
@@ -63,6 +93,17 @@ const main = async () => {
   const graphRenderer = new CanvasLineGraphRenderer(
     mainCanvas, unitCanvas, stepSize, 1
   );
+
+  refreshHandle = () => {
+    const hashValue = readHash();
+    const stepSize = stepSizeForHash(hashValue);
+    fetchData(hashValue).then(data => {
+      graphRenderer.setStepsize(stepSize);
+      graphRenderer.ingestData(data);
+      graphRenderer.render();
+      graphRenderer.drawLegend(data);
+    });
+  };
 
   window.addEventListener('hashchange', async () => {
     const hashValue = readHash();

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use actix_web::{web, HttpResponse};
 use serde::Deserialize;
 use serde_json::json;
-use crate::{models::GraphReadingRow, types::{GraphPoint, SensorLine}};
+use crate::{models::{GraphReadingRow, ReadingType}, types::{GraphPoint, SensorLine}};
 
 struct Interval {
     days_ago: i32,
@@ -47,6 +47,7 @@ fn interval_for_query(name: String) -> Interval {
 #[derive(Clone, Deserialize)]
 pub struct QueryInfo {
     last: Option<String>,
+    reading_type: i32,
 }
 
 pub async fn graph_page(state: web::Data<crate::state::AppState>) -> super::EventResponse {
@@ -59,10 +60,11 @@ pub async fn graph_data(
     query_params: web::Query<QueryInfo>,
 ) -> super::EventResponse {
     let last_interval = String::from(query_params.last.clone().unwrap_or(String::from("hour")));
+    let reading_type = ReadingType::from_int(query_params.reading_type);
+    let reading_type_id = if reading_type.is_none() { 1 } else { query_params.reading_type };
     let mut conn = pool.acquire().await?;
     let interval = interval_for_query(last_interval);
-    let graph_data = sqlx::query!(
-        "
+    let graph_data = sqlx::query!("
         select
             s.id,
             s.name,
@@ -81,7 +83,7 @@ pub async fn graph_data(
             extract(epoch from make_interval(0, 0, 0, 0, 0, $3::int, 0.0))
             ) as reading_date
             from readings r
-            where r.reading_date > (
+            where r.reading_type = $4::int and r.reading_date > (
             current_timestamp at time zone 'utc' +
             make_interval(0, 0, 0, $1::int, $2::int, 0, 0.0)
             )
@@ -91,7 +93,8 @@ pub async fn graph_data(
         order by s.id, i.reading_date",
         interval.days_ago,
         interval.hours_ago,
-        interval.resolution
+        interval.resolution,
+        reading_type_id
     )
     .map(|x| GraphReadingRow {
         id: x.id,

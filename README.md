@@ -1,5 +1,7 @@
 # rust-sensor
 
+Sensor collector and aggregator. Combination API + web app for collecting and viewing sensor readouts.
+
 ## Components
 Backend
 - rust + cargo (Server side language)

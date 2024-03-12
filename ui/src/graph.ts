@@ -104,6 +104,7 @@ export class CanvasLineGraphRenderer {
   }
 
   public ingestData(data: Array<{ id: string, points: Array<ReadingTimePoint> }>) {
+    this.lineData = {};
     let g: Record<string, Array<ReadingTimePoint>> = {};
     let minTime: number | null = null;
     let maxTime: number | null = null;
@@ -410,6 +411,7 @@ export class CanvasLineGraphRenderer {
     if (legendContainer == null) {
       throw new Error("Cannot find legend container");
     }
+    legendContainer.innerHTML = "";
 
     data.forEach(sensor => {
       const color = this.style.dataLineStyle[sensor.id].color;
