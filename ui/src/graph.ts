@@ -57,6 +57,7 @@ export class CanvasLineGraphRenderer {
   private unitCtx: CanvasRenderingContext2D;
   private lineData: Record<string, Array<IDataPoint<ReadingTimePoint>>> = {};
   private cursorPosition: number | null = null;
+  private unitLabel: string = "°F";
 
   constructor(
     private mainCanvas: HTMLCanvasElement,
@@ -103,7 +104,8 @@ export class CanvasLineGraphRenderer {
     this.xAxisInterval = stepSize;
   }
 
-  public ingestData(data: Array<{ id: string, points: Array<ReadingTimePoint> }>) {
+  public ingestData(data: Array<{ id: string, points: Array<ReadingTimePoint> }>, label: string) {
+    this.unitLabel = label;
     this.lineData = {};
     let g: Record<string, Array<ReadingTimePoint>> = {};
     let minTime: number | null = null;
@@ -272,7 +274,7 @@ export class CanvasLineGraphRenderer {
     this.unitCtx.font = `${size}px ${font}`;
     for (let i = this.bounds.y.lower + this.yAxisInterval; i < this.bounds.y.upper; i = i + this.yAxisInterval) {
       const px = this.projectY(i) + offset;
-      this.unitCtx.fillText(`${i}°F`, 5, px);
+      this.unitCtx.fillText(`${i}${this.unitLabel}`, 5, px);
     }
   }
 
@@ -384,7 +386,7 @@ export class CanvasLineGraphRenderer {
           this.mainCtx.fillStyle = fontColor;
           this.mainCtx.font = tooltipFont;
           this.mainCtx.fillText(
-            `${point.original.reading_value.toFixed(2)}°F`,
+            `${point.original.reading_value.toFixed(2)}${this.unitLabel}`,
             pos + tooltipDistanceFromCursor + tooltipInnerPadding,
             topPadding + height - tooltipInnerPadding
           );
@@ -394,7 +396,7 @@ export class CanvasLineGraphRenderer {
           this.mainCtx.fillStyle = fontColor;
           this.mainCtx.font = tooltipFont;
           this.mainCtx.fillText(
-            `${point.original.reading_value.toFixed(2)}°F`,
+            `${point.original.reading_value.toFixed(2)}${this.unitLabel}`,
             pos - (tooltipDistanceFromCursor + tooltipWidth) + tooltipInnerPadding,
             topPadding + height - tooltipInnerPadding
           );

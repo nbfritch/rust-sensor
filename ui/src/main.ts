@@ -12,7 +12,6 @@ const bindSelect = () => {
   const selectEl = "selel";
   const readingSelectEl = document.getElementById(selectEl);
   readingSelectEl?.addEventListener('input', (e) => {
-    console.log(`Got ${(e.target as HTMLSelectElement).value}`)
     readingType = (e.target as HTMLSelectElement).value as unknown as number;
     if (refreshHandle != null) {
       refreshHandle();
@@ -72,6 +71,16 @@ const stepSizeForHash = (hash: string): number => {
   }
 };
 
+const unitsForReadingType = (rt: number | string): string => {
+  const r = typeof rt === 'string' ? parseInt(rt, 10) : rt;
+  switch (r) {
+    case 1: return '°F';
+    case 2: return '%';
+    case 3: return 'lm';
+    default: return '!!';
+  }
+}
+
 const main = async () => {
   setSearchbarStyle();
   bindSelect();
@@ -99,7 +108,7 @@ const main = async () => {
     const stepSize = stepSizeForHash(hashValue);
     fetchData(hashValue).then(data => {
       graphRenderer.setStepsize(stepSize);
-      graphRenderer.ingestData(data);
+      graphRenderer.ingestData(data, unitsForReadingType(readingType));
       graphRenderer.render();
       graphRenderer.drawLegend(data);
     });
@@ -118,13 +127,13 @@ const main = async () => {
       const d = await fetchHistory(year, month, day);
       const stepSize = stepSizeForHash(hashValue);
       graphRenderer.setStepsize(stepSize);
-      graphRenderer.ingestData(d);
+      graphRenderer.ingestData(d, unitsForReadingType(readingType));
       graphRenderer.render();
     } else {
       const d = await fetchData(hashValue);
       const stepSize = stepSizeForHash(hashValue);
       graphRenderer.setStepsize(stepSize);
-      graphRenderer.ingestData(d);
+      graphRenderer.ingestData(d, unitsForReadingType(readingType));
       graphRenderer.render();
     }
   });
@@ -195,7 +204,7 @@ const main = async () => {
     });
   }
 
-  graphRenderer.ingestData(graphData);
+  graphRenderer.ingestData(graphData, unitsForReadingType(readingType));
   graphRenderer.render();
   graphRenderer.drawLegend(graphData);
 };
