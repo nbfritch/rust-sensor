@@ -12,8 +12,11 @@ use actix_web::{
 };
 use actix_web_static_files::ResourceFiles;
 use routes::{
-    graph::{graph_data, graph_page}, history::historical_graph, readings::create_reading,
+    graph::{graph_data, graph_page},
+    history::historical_graph,
+    readings::create_reading,
 };
+use scylla::{Session, SessionBuilder};
 use sqlx::postgres::PgPoolOptions;
 use std::path::Path;
 use url::build_href_for;
@@ -41,6 +44,14 @@ async fn main() {
         .connect(&db_url)
         .await
         .expect("Could not connect to database");
+
+    let scylla_url = std::env::var("SYCLLA_URL").expect("Could not find SYCLLA_URL in env");
+    let session = SessionBuilder::new()
+        .known_node(scylla_url)
+        .build()
+        .await
+        .expect("Could not connect to scylladb");
+    let session_state = std::sync::Arc::new(session);
 
     let template_folder = Path::new("./templates");
 
@@ -78,6 +89,7 @@ async fn main() {
             .route("/api/history", web::get().to(historical_graph))
             .app_data(Data::new(state))
             .app_data(Data::new(pool.clone()))
+            .app_data(Data::new(session_state.clone()))
     })
     .bind((web_address, web_port))
     .expect("Could not bind address")

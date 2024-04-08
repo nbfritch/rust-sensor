@@ -1,0 +1,9 @@
+# See mio:/home/nathan/cassandra-dev-cluster
+version: "3.8"
+services:
+  scylla:
+    image: docker.io/scylladb/scylla:latest
+    restart: always
+    ports:
+      - 7000:7000
+      - 9042:9042

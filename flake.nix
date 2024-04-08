@@ -28,6 +28,7 @@
               bun
               bashInteractive
               sqlx-cli
+              go-migrate
             ];
           };
         }
