@@ -8,9 +8,7 @@ pub struct GraphPoint {
 
 #[derive(Serialize, Deserialize)]
 pub struct SensorLine {
-    pub id: i64,
-    pub name: String,
-    pub description: String,
+    pub sensor_id: String,
     pub points: Vec<GraphPoint>,
 }
 

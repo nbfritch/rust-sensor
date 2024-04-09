@@ -62,7 +62,7 @@ pub async fn graph_data(
     let last_interval = String::from(query_params.last.clone().unwrap_or(String::from("hour")));
     let reading_type = ReadingType::from_int(query_params.reading_type);
     let reading_type_id = if reading_type.is_none() { 1 } else { query_params.reading_type };
-    let mut conn = pool.acquire().await?;
+    let mut conn = pool.acquire().await.expect("blah");
     let interval = interval_for_query(last_interval);
     let graph_data = sqlx::query!("
         select

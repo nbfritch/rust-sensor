@@ -16,8 +16,7 @@ use routes::{
     history::historical_graph,
     readings::create_reading,
 };
-use scylla::{Session, SessionBuilder};
-use sqlx::postgres::PgPoolOptions;
+use scylla::SessionBuilder;
 use std::path::Path;
 use url::build_href_for;
 
@@ -38,12 +37,6 @@ async fn main() {
     let web_address_var: String =
         std::env::var("WEB_ADDRESS").expect("Could not find WEB_ADDRESS in env");
     let web_address: &str = &web_address_var;
-
-    let pool = PgPoolOptions::new()
-        .max_connections(10)
-        .connect(&db_url)
-        .await
-        .expect("Could not connect to database");
 
     let scylla_url = std::env::var("SYCLLA_URL").expect("Could not find SYCLLA_URL in env");
     let session = SessionBuilder::new()
@@ -88,7 +81,6 @@ async fn main() {
             .route("/api/graph", web::get().to(graph_data))
             .route("/api/history", web::get().to(historical_graph))
             .app_data(Data::new(state))
-            .app_data(Data::new(pool.clone()))
             .app_data(Data::new(session_state.clone()))
     })
     .bind((web_address, web_port))

@@ -1,25 +1,61 @@
-use std::collections::HashMap;
+use crate::{
+    models::{Reading, Sensor},
+    types::{GraphPoint, SensorLine},
+};
+use ::chrono::Days;
 use actix_web::{web, HttpResponse};
+use chrono::{FixedOffset, TimeDelta, Utc};
 use serde::Deserialize;
 use serde_json::json;
-use crate::{models::GraphReadingRow, types::{GraphPoint, SensorLine}};
+use std::{collections::HashMap, hash::Hash};
 
 #[derive(Clone, Deserialize)]
 pub struct HistoryQueryInfo {
     year: i32,
-    month: i32,
-    day: i32,
+    month: u32,
+    day: u32,
 }
 
 pub async fn historical_graph(
-    pool: web::Data<sqlx::PgPool>,
+    db: web::Data<scylla::Session>,
     query_params: web::Query<HistoryQueryInfo>,
 ) -> super::EventResponse {
     let year = query_params.year;
     let month = query_params.month;
     let day = query_params.day;
-    let mut conn = pool.acquire().await?;
-    let graph_data = sqlx::query!("
+    let date = chrono::NaiveDate::from_ymd_opt(year, month, day).unwrap();
+    let time = chrono::NaiveTime::from_hms_opt(0, 0, 0).unwrap();
+    let ndatetime = chrono::NaiveDateTime::parse_from_str(
+        &format!("{}-{}-{} {}:{}:{}", year, month, day, 0, 0, 0),
+        "%Y-%m-%d %H:%M:%S",
+    )
+    .unwrap();
+    let datetime = chrono::DateTime::<Utc>::from_naive_utc_and_offset(ndatetime, Utc)
+        .checked_sub_signed(TimeDelta::try_hours(-6).unwrap())
+        .unwrap();
+    let edatetime = datetime.checked_add_days(Days::new(1)).unwrap();
+    let sensors = db
+        .query("select id from sensors", ())
+        .await?
+        .rows_typed::<Sensor>()?
+        .map(|s| s.unwrap())
+        .collect::<Vec<_>>();
+
+    let timeboxed_readings = db
+        .query(
+            "
+        select id, sensor_id, reading_value, reading_type, reading_date, created_at
+        from readings
+        where reading_date > ? AND reading_date < ?",
+            (datetime, edatetime),
+        )
+        .await?
+        .rows_typed::<Reading>()?
+        .map(|s| s.unwrap())
+        .collect::<Vec<_>>();
+    /* let mut conn = pool.acquire().await?;
+    let graph_data = sqlx::query!(
+        "
         select
             s.id,
             s.name,
@@ -60,34 +96,33 @@ pub async fn historical_graph(
         reading_date: x.reading_date,
     })
     .fetch_all(conn.as_mut())
-    .await;
+    .await; */
 
-    if graph_data.is_err() {
-        println!("{:?}", graph_data);
-        return Ok(HttpResponse::InternalServerError()
-            .json(json!({"status": "error","message": "Error retrieving current data"})));
-    }
+    let sensors_dict: HashMap<String, Sensor> = HashMap::new();
+    let folded_sensors = sensors.iter().fold(sensors_dict, |mut acc, s| {
+        acc.entry(s.id.clone()).or_insert_with(|| (*s).clone());
+        acc
+    });
 
-    let lines: HashMap<i64, SensorLine> = HashMap::new();
-    let folded_data = graph_data.unwrap().iter().fold(lines, |mut acc, el| {
-        let line = acc.entry(el.id).or_insert_with(|| SensorLine {
-            id: el.id,
-            name: el.name.clone().unwrap_or(String::from("MISSING")),
-            description: el.description.clone().unwrap_or(String::from("MISSING")),
+    let lines: HashMap<String, SensorLine> = HashMap::new();
+    let folded_data = timeboxed_readings.iter().fold(lines, |mut acc, el| {
+        let line = acc.entry(el.id.clone()).or_insert_with(|| SensorLine {
+            sensor_id: el.sensor_id.clone(),
             points: Vec::new(),
         });
 
-        if el.reading_value.is_some() && el.reading_date.is_some() {
-            line.points.push(GraphPoint {
-                reading_value: el.reading_value.unwrap(),
-                reading_date: el.reading_date.unwrap(),
-            });
-        }
+        line.points.push(GraphPoint {
+            reading_value: el.reading_value,
+            reading_date: el.reading_date.timestamp(),
+        });
 
         acc
     });
 
     let final_lines = folded_data.values().collect::<Vec<_>>();
 
-    Ok(HttpResponse::Ok().json(final_lines))
+    Ok(HttpResponse::Ok().json(json!({
+        sensors: folded_sensors,
+        readings: folded_data,
+    })))
 }
