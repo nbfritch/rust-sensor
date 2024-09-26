@@ -12,7 +12,9 @@ use actix_web::{
 };
 use actix_web_static_files::ResourceFiles;
 use routes::{
-    graph::{graph_data, graph_page}, history::historical_graph, readings::create_reading,
+    graph::{graph_data, graph_page},
+    history::historical_graph,
+    readings::create_reading,
 };
 use sqlx::postgres::PgPoolOptions;
 use std::path::Path;

@@ -1,15 +1,29 @@
-use actix_web::{put, web::{self, Json}, HttpResponse};
+use actix_web::{
+    put,
+    web::{self, Json},
+    HttpResponse,
+};
 use serde_json::json;
 
-use crate::types::CreateReadingRequest;
 use crate::models::ReadingType;
+use crate::types::CreateReadingRequest;
+
+fn validate_reading_req(create_reading_request: &CreateReadingRequest) -> bool {
+    let v = create_reading_request.reading_value;
+    match create_reading_request.reading_type {
+        1 => v >= 0.0 && v <= 120.0f64,
+        2 => v >= 0.0 && v <= 100.0f64,
+        3 => v >= 0.0 && v <= 65535.0f64,
+        _ => false,
+    }
+}
 
 #[put("/api/readings{tail}*")]
 pub async fn create_reading(
     pool: web::Data<sqlx::PgPool>,
     Json(create_reading_request): web::Json<CreateReadingRequest>,
 ) -> super::EventResponse {
-    if create_reading_request.reading_value <= 0.0f64 || create_reading_request.reading_value >= 120.0f64 {
+    if validate_reading_req(&create_reading_request) {
         return Ok(HttpResponse::BadRequest()
             .json(json!({"status": "error","message": "Value out of range"})));
     }
@@ -23,7 +37,9 @@ pub async fn create_reading(
     let sensor_id = sqlx::query!(
         "select id from sensors where name = $1",
         create_reading_request.sensor_name
-    ).map(|x| x.id).fetch_one(conn.as_mut())
+    )
+    .map(|x| x.id)
+    .fetch_one(conn.as_mut())
     .await;
 
     if sensor_id.is_err() {
@@ -43,5 +59,5 @@ pub async fn create_reading(
     }
 
     Ok(HttpResponse::Created()
-    .json(json!({"status": "created", "reading_id": insert_result.unwrap()})))
+        .json(json!({"status": "created", "reading_id": insert_result.unwrap()})))
 }
