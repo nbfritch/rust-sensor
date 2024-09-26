@@ -23,7 +23,7 @@ pub async fn create_reading(
     pool: web::Data<sqlx::PgPool>,
     Json(create_reading_request): web::Json<CreateReadingRequest>,
 ) -> super::EventResponse {
-    if validate_reading_req(&create_reading_request) {
+    if !validate_reading_req(&create_reading_request) {
         return Ok(HttpResponse::BadRequest()
             .json(json!({"status": "error","message": "Value out of range"})));
     }
