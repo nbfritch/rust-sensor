@@ -96,6 +96,11 @@ export const defaultGraphStyle: IGraphStyle = {
       color: 'violet',
       fontColor: 'violet',
       width: 2,
+    },
+    "15": {
+      color: 'red',
+      fontColor: 'red',
+      width: 2,
     }
   },
   tooltipTopMargin: 10,

@@ -416,7 +416,7 @@ export class CanvasLineGraphRenderer {
     legendContainer.innerHTML = "";
 
     data.forEach(sensor => {
-      const color = this.style.dataLineStyle[sensor.id].color;
+      const color = (this.style.dataLineStyle[sensor.id] ?? this.style.defaultLineStyle).color;
       const legendId = `legend-${sensor.id}`;
       const legendEl = document.createElement("div");
       legendEl.setAttribute("id", legendId);
