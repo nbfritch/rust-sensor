@@ -110,8 +110,8 @@ export class CanvasLineGraphRenderer {
     let g: Record<string, Array<ReadingTimePoint>> = {};
     let minTime: number | null = null;
     let maxTime: number | null = null;
-    let minTemp: number | null = null;
-    let maxTemp: number | null = null;
+    let minValue: number | null = null;
+    let maxValue: number | null = null;
     data.forEach(sensor => {
       g[sensor.id] = sensor.points
       sensor.points.forEach(point => {
@@ -123,23 +123,23 @@ export class CanvasLineGraphRenderer {
           minTime = point.reading_date;
         }
 
-        if (maxTemp == null || point.reading_value > maxTemp) {
-          maxTemp = point.reading_value;
+        if (maxValue == null || point.reading_value > maxValue) {
+          maxValue = point.reading_value;
         }
 
-        if (minTemp == null || point.reading_value < minTemp) {
-          minTemp = point.reading_value
+        if (minValue == null || point.reading_value < minValue) {
+          minValue = point.reading_value
         }
       })
     });
 
-    if (minTemp == null || maxTemp == null || minTime == null || maxTime == null) {
+    if (minValue == null || maxValue == null || minTime == null || maxTime == null) {
       throw new Error('Did not get any data');
     }
 
     const graphBounds: IGraphBounds = {
       x: { lower: minTime, upper: maxTime },
-      y: { lower: Math.floor(minTemp) - 2, upper: Math.ceil(maxTemp) + 2 },
+      y: { lower: Math.floor(minValue) - 2, upper: Math.ceil(maxValue) + 2 },
     };
 
     this.bounds = graphBounds
@@ -258,7 +258,11 @@ export class CanvasLineGraphRenderer {
     const lineOffset = width / 2;
     this.mainCtx.strokeStyle = color;
     this.mainCtx.lineWidth = width;
-    for (let i = this.bounds.y.lower; i < this.bounds.y.upper; i = i + this.yAxisInterval) {
+    let d = this.yAxisInterval;
+    if ((this.bounds.y.upper - this.bounds.y.lower) > 50) {
+      d = 5000;
+    }
+    for (let i = this.bounds.y.lower; i < this.bounds.y.upper; i = i + d) {
       const px = this.projectY(i) + lineOffset;
       this.mainCtx.beginPath();
       this.mainCtx.moveTo(0, px);
@@ -272,7 +276,11 @@ export class CanvasLineGraphRenderer {
     const offset = size / 4;
     this.unitCtx.fillStyle = color;
     this.unitCtx.font = `${size}px ${font}`;
-    for (let i = this.bounds.y.lower + this.yAxisInterval; i < this.bounds.y.upper; i = i + this.yAxisInterval) {
+    let d = this.yAxisInterval;
+    if ((this.bounds.y.upper - this.bounds.y.lower) > 50) {
+      d = 5000;
+    }
+    for (let i = this.bounds.y.lower + this.yAxisInterval; i < this.bounds.y.upper; i = i + d) {
       const px = this.projectY(i) + offset;
       this.unitCtx.fillText(`${i}${this.unitLabel}`, 5, px);
     }
