@@ -25,7 +25,9 @@ pub async fn historical_graph(
             s.name,
             s.description,
             floor(i.reading_date)::bigint as reading_date,
-            avg(i.reading_value) as reading_value
+            avg(i.reading_value) as reading_value,
+            s.color_hex_code,
+            s.font_hex_code
         from (
             select
             r.reading_value as reading_value,
@@ -58,6 +60,8 @@ pub async fn historical_graph(
         description: x.description,
         reading_value: x.reading_value,
         reading_date: x.reading_date,
+        color_hex_code: x.color_hex_code,
+        font_hex_code: x.font_hex_code,
     })
     .fetch_all(conn.as_mut())
     .await;
@@ -75,6 +79,8 @@ pub async fn historical_graph(
             name: el.name.clone().unwrap_or(String::from("MISSING")),
             description: el.description.clone().unwrap_or(String::from("MISSING")),
             points: Vec::new(),
+            color_hex_code: el.color_hex_code.clone(),
+            font_hex_code: el.font_hex_code.clone(),
         });
 
         if el.reading_value.is_some() && el.reading_date.is_some() {

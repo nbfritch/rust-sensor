@@ -11,6 +11,8 @@ pub struct SensorLine {
     pub id: i64,
     pub name: String,
     pub description: String,
+    pub color_hex_code: String,
+    pub font_hex_code: String,
     pub points: Vec<GraphPoint>,
 }
 

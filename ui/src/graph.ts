@@ -1,4 +1,5 @@
-import { IGraphStyle, defaultGraphStyle } from "./style";
+import { ApiResponse } from "./main";
+import { IGraphStyle, defaultGraphStyle, defaultLineWidthPx } from "./style";
 
 export interface IBounds {
   lower: number;
@@ -58,6 +59,8 @@ export class CanvasLineGraphRenderer {
   private lineData: Record<string, Array<IDataPoint<ReadingTimePoint>>> = {};
   private cursorPosition: number | null = null;
   private unitLabel: string = "°F";
+  private lineColorIdx: Record<string, string> = {};
+  private fontColorIdx: Record<string, string> = {};
 
   constructor(
     private mainCanvas: HTMLCanvasElement,
@@ -104,9 +107,11 @@ export class CanvasLineGraphRenderer {
     this.xAxisInterval = stepSize;
   }
 
-  public ingestData(data: Array<{ id: string, points: Array<ReadingTimePoint> }>, label: string) {
+  public ingestData(data: ApiResponse, label: string) {
     this.unitLabel = label;
     this.lineData = {};
+    this.fontColorIdx = {};
+    this.lineColorIdx = {};
     let g: Record<string, Array<ReadingTimePoint>> = {};
     let minTime: number | null = null;
     let maxTime: number | null = null;
@@ -114,6 +119,8 @@ export class CanvasLineGraphRenderer {
     let maxValue: number | null = null;
     data.forEach(sensor => {
       g[sensor.id] = sensor.points
+      this.fontColorIdx[sensor.id] = sensor.font_hex_code;
+      this.lineColorIdx[sensor.id] = sensor.color_hex_code;
       sensor.points.forEach(point => {
         if (maxTime == null || point.reading_date > maxTime) {
           maxTime = point.reading_date;
@@ -288,10 +295,10 @@ export class CanvasLineGraphRenderer {
 
   private drawLines() {
     Object.keys(this.lineData).forEach(line => {
-      const { color, width } = (line in this.style.dataLineStyle ? this.style.dataLineStyle[line] : this.style.defaultLineStyle);
+      const color = this.lineColorIdx[line];
       const points = this.lineData[line];
       this.mainCtx.strokeStyle = color;
-      this.mainCtx.lineWidth = width;
+      this.mainCtx.lineWidth = defaultLineWidthPx;
       this.mainCtx.beginPath();
       const { x: initX, y: initY } = points[0];
       this.mainCtx.moveTo(initX, initY);
@@ -379,7 +386,8 @@ export class CanvasLineGraphRenderer {
       .sort((a, b) =>
         closestPointsToCursor[b].original.reading_value - closestPointsToCursor[a].original.reading_value)
       .forEach(line => {
-        const { color, fontColor, width } = (this.style.dataLineStyle[line] ?? this.style.defaultLineStyle);
+        const color = this.lineColorIdx[line];
+        const fontColor = this.fontColorIdx[line];
         const point = closestPointsToCursor[line];
         this.mainCtx.beginPath();
         this.mainCtx.strokeStyle = color;
@@ -387,7 +395,7 @@ export class CanvasLineGraphRenderer {
         this.mainCtx.stroke();
 
         this.mainCtx.beginPath();
-        this.mainCtx.lineWidth = width;
+        this.mainCtx.lineWidth = defaultLineWidthPx;
         if (pos < (this.drawableWidth - tooltipTurnaroundPx)) {
           this.mainCtx.fillStyle = tooltipBackground;
           this.mainCtx.fillRect(pos + tooltipDistanceFromCursor, topPadding, tooltipWidth, height);
@@ -424,7 +432,7 @@ export class CanvasLineGraphRenderer {
     legendContainer.innerHTML = "";
 
     data.forEach(sensor => {
-      const color = (this.style.dataLineStyle[sensor.id] ?? this.style.defaultLineStyle).color;
+      const color = this.lineColorIdx[sensor.id];
       const legendId = `legend-${sensor.id}`;
       const legendEl = document.createElement("div");
       legendEl.setAttribute("id", legendId);

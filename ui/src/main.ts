@@ -1,6 +1,6 @@
 import { CanvasLineGraphRenderer, ReadingTimePoint } from './graph';
 import './style.css'
-import './bulma.min.css'
+import 'bulma/css/bulma.min.css';
 
 let refreshHandle: (() => void) | null = null;
 
@@ -19,7 +19,7 @@ const bindSelect = () => {
   });
 };
 
-type ApiResponse = Array<{id: string; name: string; description: string; points: Array<ReadingTimePoint>}>
+export type ApiResponse = Array<{id: string; name: string; color_hex_code: string; font_hex_code: string; description: string; points: Array<ReadingTimePoint>}>
 
 const fetchData = async (timespan: string): Promise<ApiResponse> => {
   const graphDataResponse = await fetch(`/api/graph?last=${timespan}&reading_type=${readingType}`, {headers: {mode: 'no-cors'}});

@@ -14,6 +14,8 @@ export interface ITextStyle {
   size: number;
 }
 
+export const defaultLineWidthPx = 2;
+
 export interface IGraphStyle {
   backgroundStyle: IFillStyle;
   defaultLineStyle: ILineStyle;
@@ -23,7 +25,6 @@ export interface IGraphStyle {
   xAxisLineStyle?: ILineStyle;
   yAxisLineStyle?: ILineStyle;
   yAxisLegendStyle: ITextStyle;
-  dataLineStyle: Record<string, ILineStyle>;
   tooltipTopMargin: number;
   tooltipHeight: number;
   tooltipSeparation: number;
@@ -75,33 +76,6 @@ export const defaultGraphStyle: IGraphStyle = {
     color: 'rgb(20, 20, 20)',
     font: 'sans-serif',
     size: 12,
-  },
-  dataLineStyle: {
-    "1": {
-      color: 'orange',
-      fontColor: 'orange',
-      width: 2,
-    },
-    "2": {
-      color: 'cornflowerblue',
-      fontColor: 'cyan',
-      width: 2,
-    },
-    "3": {
-      color: 'green',
-      fontColor: 'lime',
-      width: 2,
-    },
-    "9": {
-      color: 'violet',
-      fontColor: 'violet',
-      width: 2,
-    },
-    "15": {
-      color: 'red',
-      fontColor: 'red',
-      width: 2,
-    }
   },
   tooltipTopMargin: 10,
   tooltipHeight: 20,
