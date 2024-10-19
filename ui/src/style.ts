@@ -1,42 +1,6 @@
-export interface ILineStyle {
-  color: string;
-  fontColor: string;
-  width: number;
-}
-
-export interface IFillStyle {
-  color: string;
-}
-
-export interface ITextStyle {
-  font: string;
-  color: string;
-  size: number;
-}
+import { IGraphStyle } from './types';
 
 export const defaultLineWidthPx = 2;
-
-export interface IGraphStyle {
-  backgroundStyle: IFillStyle;
-  defaultLineStyle: ILineStyle;
-  defaultTextStyle: ITextStyle;
-  borderLineStyle?: ILineStyle;
-  cursorLineStyle?: ILineStyle;
-  xAxisLineStyle?: ILineStyle;
-  yAxisLineStyle?: ILineStyle;
-  yAxisLegendStyle: ITextStyle;
-  tooltipTopMargin: number;
-  tooltipHeight: number;
-  tooltipSeparation: number;
-  tooltipWidth: number;
-  tooltipDateWidth: number;
-  tooltipInnerPadding: number;
-  tooltipTurnaroundPx: number;
-  tooltipDistanceFromCursor: number;
-  tooltipDateColor: string;
-  tooltipFont: string;
-  tooltipBackground: string;
-}
 
 export const defaultGraphStyle: IGraphStyle = {
   backgroundStyle: {
