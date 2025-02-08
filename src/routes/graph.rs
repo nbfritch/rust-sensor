@@ -59,7 +59,7 @@ pub async fn graph_data(
     pool: web::Data<sqlx::PgPool>,
     query_params: web::Query<QueryInfo>,
 ) -> super::EventResponse {
-    let last_interval = String::from(query_params.last.clone().unwrap_or(String::from("hour")));
+    let last_interval = query_params.last.clone().unwrap_or(String::from("hour"));
     let reading_type = ReadingType::from_int(query_params.reading_type);
     let reading_type_id = if reading_type.is_none() { 1 } else { query_params.reading_type };
     let mut conn = pool.acquire().await?;

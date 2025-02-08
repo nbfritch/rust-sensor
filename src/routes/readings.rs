@@ -11,9 +11,9 @@ use crate::types::CreateReadingRequest;
 fn validate_reading_req(create_reading_request: &CreateReadingRequest) -> bool {
     let v = create_reading_request.reading_value;
     match create_reading_request.reading_type {
-        1 => v >= 0.0 && v <= 120.0f64,
-        2 => v >= 0.0 && v <= 100.0f64,
-        3 => v >= 0.0 && v <= 65535.0f64,
+        1 => (0.0..=120.0f64).contains(&v),
+        2 => (0.0..=100.0f64).contains(&v),
+        3 => (0.0..=65535.0f64).contains(&v),
         _ => false,
     }
 }
