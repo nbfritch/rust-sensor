@@ -19,7 +19,8 @@ impl ReadingType {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(FromRow, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CurrentReadingModel {
     pub id: i64,
     pub name: Option<String>,
@@ -27,7 +28,7 @@ pub struct CurrentReadingModel {
     pub reading_value: Option<f64>,
     pub minutes_ago: Option<i64>,
     pub reading_date: Option<i64>,
-    pub reading_type_label: String,
+    pub reading_type_label: Option<String>,
 }
 
 #[derive(Debug, FromRow, Deserialize, Serialize)]

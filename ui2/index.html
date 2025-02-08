@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>Tembos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:;base64,=">
+  <script>
+    const burgerId = 'burger';
+    const mainNavId = 'mainNavbar';
+    const navDropdownId = 'nav-dropdown';
+
+    const unregisterHandleCancel = () => {
+      document.removeEventListener('click', handleCancelMenu);
+    };
+
+    const handleCancelMenu = (ev) => {
+      if (ev.defaultPrevented) {
+        return;
+      }
+
+      const burgerElement = document.getElementById(burgerId);
+      const mainNav = document.getElementById(mainNavId);
+      burgerElement.classList.remove("is-active");
+      mainNav.classList.remove("is-active");
+      unregisterHandleCancel();
+    };
+
+    document.addEventListener('DOMContentLoaded', (_e) => {
+      const burgerElement = document.getElementById(burgerId);
+      const dropdown = document.getElementById("nav-dropdown");
+      let enabled = false;
+      burgerElement.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        const target = document.getElementById(mainNavId);
+        target.classList.add('is-active');
+        burgerElement.classList.add('is-active');
+        document.addEventListener('click', handleCancelMenu);
+      });
+
+      window.addEventListener('hashchange', async () => {
+        burgerElement.classList.remove("is-active");
+        dropdown.classList.remove("is-active");
+      });
+    });
+
+  </script>
+</head>
+
+<body>
+  <div id="app"></div>
+  <script type="module" src="/src/index.tsx"></script>
+</body>
+
+</html>

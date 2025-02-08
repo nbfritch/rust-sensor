@@ -19,7 +19,7 @@ pub async fn historical_graph(
     let month = query_params.month;
     let day = query_params.day;
     let mut conn = pool.acquire().await?;
-    let graph_data = sqlx::query!("
+    let graph_data = sqlx::query_as!(GraphReadingRow, "
         select
             s.id,
             s.name,
@@ -54,15 +54,6 @@ pub async fn historical_graph(
         month,
         day
     )
-    .map(|x| GraphReadingRow {
-        id: x.id,
-        name: x.name,
-        description: x.description,
-        reading_value: x.reading_value,
-        reading_date: x.reading_date,
-        color_hex_code: x.color_hex_code,
-        font_hex_code: x.font_hex_code,
-    })
     .fetch_all(conn.as_mut())
     .await;
 

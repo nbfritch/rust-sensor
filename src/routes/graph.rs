@@ -64,7 +64,7 @@ pub async fn graph_data(
     let reading_type_id = if reading_type.is_none() { 1 } else { query_params.reading_type };
     let mut conn = pool.acquire().await?;
     let interval = interval_for_query(last_interval);
-    let graph_data = sqlx::query!("
+    let graph_data = sqlx::query_as!(GraphReadingRow, "
         select
             s.id,
             s.name,
@@ -98,15 +98,6 @@ pub async fn graph_data(
         interval.resolution,
         reading_type_id
     )
-    .map(|x| GraphReadingRow {
-        id: x.id,
-        name: x.name,
-        description: x.description,
-        reading_value: x.reading_value,
-        reading_date: x.reading_date,
-        color_hex_code: x.color_hex_code,
-        font_hex_code: x.font_hex_code,
-    })
     .fetch_all(conn.as_mut())
     .await;
 
