@@ -1,0 +1,56 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        select distinct on (s.id, r.reading_type)\n            s.id,\n            s.name,\n            s.description,\n            r.reading_value,\n            r.reading_type,\n            abs(round(\n                extract(epoch from ((current_timestamp at time zone 'utc') - reading_date)) / 60))::bigint\n                as minutes_ago,\n            round(extract(epoch from r.reading_date))::bigint as reading_date\n        from sensors s\n        join readings r\n            on r.sensor_id = s.id\n        where\n            r.reading_date > (current_timestamp + interval '-1 day')\n        order by\n            s.id,\n            r.reading_type,\n            r.reading_date desc\n    ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "description",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "reading_value",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 4,
+        "name": "reading_type",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 5,
+        "name": "minutes_ago",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 6,
+        "name": "reading_date",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      true,
+      false,
+      null,
+      null
+    ]
+  },
+  "hash": "78dbb8bd718db70f47b07a2e829adb67c63e243b1df91e124766a4c5197741a5"
+}
