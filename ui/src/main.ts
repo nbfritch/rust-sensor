@@ -8,10 +8,10 @@ let refreshHandle: (() => void) | null = null;
 let readingType = 1;
 const searchBarId = 'history-search';
 const readingSelectId = 'readingTypeSelect';
+const selectElementId = 'selel';
 
 const bindSelect = () => {
-  const selectEl = 'selel';
-  const readingSelectEl = document.getElementById(selectEl);
+  const readingSelectEl = document.getElementById(selectElementId);
   readingSelectEl?.addEventListener('input', (e) => {
     readingType = (e.target as HTMLSelectElement).value as unknown as number;
     if (refreshHandle != null) {
@@ -75,6 +75,15 @@ const unitsForReadingType = (rt: number | string): string => {
 };
 
 const main = async () => {
+  const selectTypeEl = document.getElementById(selectElementId) as HTMLSelectElement | null;
+  if (selectTypeEl) {
+    const currentReadingType = parseInt(selectTypeEl.value, 10);
+    console.log('Setting reading type to', selectTypeEl.value);
+    if (typeof currentReadingType === 'number' && !isNaN(currentReadingType)) {
+      console.log('Setting reading type to', currentReadingType);
+      readingType = currentReadingType;
+    }
+  }
   setSearchbarStyle();
   bindSelect();
 

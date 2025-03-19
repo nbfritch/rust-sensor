@@ -43,12 +43,12 @@ main {
 
 #main-canvas {
   height: 100%;
-  width: 92%;
+  width: calc(100% - 60px);
 }
 
 #units-canvas {
   height: 100%;
-  width: 8%;
+  width: 60px;
 }
 
 #app-footer {
@@ -57,4 +57,8 @@ main {
 
 .graph-legend {
   padding-right: 10px;
+}
+
+.burger-segment {
+  color: white;
 }
