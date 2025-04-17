@@ -41,8 +41,8 @@ fn fold_line_data(points: Vec<GraphRow>) -> GraphRes {
     }
 
     GraphRes {
-        min: min.unwrap_or(0.0),
-        max: max.unwrap_or(0.0),
+        min: min.map(|m| m.floor()).unwrap_or(0.0),
+        max: max.map(|m| m.ceil()).unwrap_or(0.0),
         data: d,
     }
 }

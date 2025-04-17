@@ -12,6 +12,6 @@ FROM docker.io/library/debian:bookworm-slim as runner
 WORKDIR /app
 COPY --from=backendbuilder /app/target/release/rust_sensor .
 ENV WEB_ADDRESS=0.0.0.0
-ENV WEB_PORT=8080
-EXPOSE 8080
+ENV WEB_PORT=8070
+EXPOSE 8070
 ENTRYPOINT ["./rust_sensor"]
