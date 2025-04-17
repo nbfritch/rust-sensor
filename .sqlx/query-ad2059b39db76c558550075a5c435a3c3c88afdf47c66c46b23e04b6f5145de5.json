@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        insert into sensors (name, description, color_hex_code, font_hex_code, inserted_at, updated_at)\n        values ($1, $2, $3, $4, current_timestamp, current_timestamp)\n        returning id\n    ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "ad2059b39db76c558550075a5c435a3c3c88afdf47c66c46b23e04b6f5145de5"
+}

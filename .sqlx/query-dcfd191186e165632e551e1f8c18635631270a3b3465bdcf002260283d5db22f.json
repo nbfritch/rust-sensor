@@ -1,0 +1,37 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select\n      i.sensor_id,\n      floor(i.reading_date)::bigint as reading_date,\n      avg(i.reading_value) as reading_value\n    from (\n      select\n        r.sensor_id,\n        r.reading_value,\n        (\n          floor(\n            extract(epoch from r.reading_date) /\n            extract(epoch from make_interval(0, 0, 0, 0, 0, $1, 0.0))\n          ) * extract(epoch from  make_interval(0, 0, 0, 0, 0, $1, 0.0))\n        ) as reading_date\n      from readings r\n      where\n        r.reading_type = $4 and\n        r.reading_date between $2 and $3\n    ) i\n    group by i.sensor_id, i.reading_date\n    order by i.sensor_id, i.reading_date",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "sensor_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "reading_date",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "reading_value",
+        "type_info": "Float8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Timestamp",
+        "Timestamp",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      true,
+      null,
+      null
+    ]
+  },
+  "hash": "dcfd191186e165632e551e1f8c18635631270a3b3465bdcf002260283d5db22f"
+}

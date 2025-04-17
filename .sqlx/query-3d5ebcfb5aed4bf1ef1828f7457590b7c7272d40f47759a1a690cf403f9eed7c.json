@@ -1,0 +1,56 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select distinct on (r.sensor_id, r.reading_type)\n\t\t\tr.id,\n\t\t\tr.reading_type,\n\t\t\tr.reading_value,\n\t\t\tcast(extract(epoch from r.reading_date) as bigint) * 1000 as reading_date,\n\t\t\tr.sensor_id,\n\t\t\tcast(extract(epoch from r.inserted_at) as bigint) * 1000 as inserted_at,\n\t\t\tcast(extract(epoch from r.updated_at) as bigint) * 1000 as updated_at\n\t\tfrom readings r\n\t\twhere r.reading_date > (current_timestamp - interval '1 day')\n\t\torder by\n\t\t\tr.sensor_id,\n\t\t\tr.reading_type,\n\t\t\tr.reading_date desc",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "reading_type",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "reading_value",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 3,
+        "name": "reading_date",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 4,
+        "name": "sensor_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 5,
+        "name": "inserted_at",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 6,
+        "name": "updated_at",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      null,
+      true,
+      null,
+      null
+    ]
+  },
+  "hash": "3d5ebcfb5aed4bf1ef1828f7457590b7c7272d40f47759a1a690cf403f9eed7c"
+}

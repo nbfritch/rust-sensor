@@ -1,0 +1,56 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select\n         s.id,\n         s.name,\n         s.description,\n         s.color_hex_code,\n         s.font_hex_code,\n         cast(extract(epoch from s.inserted_at) as bigint) * 1000 as inserted_at,\n         cast(extract(epoch from s.updated_at) as bigint) * 1000 as updated_at\n        from sensors s\n        order by s.id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "description",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "color_hex_code",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "font_hex_code",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "inserted_at",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 6,
+        "name": "updated_at",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      false,
+      false,
+      null,
+      null
+    ]
+  },
+  "hash": "ffc583173924fde0ddd1187110d1eb9bfbccfe756603e90bbb7ad173bdf30a2a"
+}

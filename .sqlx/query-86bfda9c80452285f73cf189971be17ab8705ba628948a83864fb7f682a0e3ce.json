@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        update sensors\n        set name = $2,\n            description = $3,\n            color_hex_code = $4,\n            font_hex_code = $5,\n            updated_at = current_timestamp\n        where id = $1\n    ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "86bfda9c80452285f73cf189971be17ab8705ba628948a83864fb7f682a0e3ce"
+}
