@@ -1,5 +1,5 @@
-use actix_web::web;
-use crate::models::CurrentReadingModel;
+use actix_web::{web, HttpResponse};
+use crate::types::current::CurrentReadingModel;
 
 fn reading_type_label(t: i32) -> String {
     String::from(match t {
@@ -12,7 +12,6 @@ fn reading_type_label(t: i32) -> String {
 
 pub async fn index(
     pool: web::Data<sqlx::PgPool>,
-    state: web::Data<crate::state::AppState>,
 ) -> super::EventResponse {
     let mut conn = pool.acquire().await?;
     let current_readings_result = sqlx::query!("
@@ -47,7 +46,5 @@ pub async fn index(
     }).fetch_all(conn.as_mut())
     .await?;
 
-    let mut context = tera::Context::new();
-    context.insert("current_readings", &current_readings_result);
-    state.render_template("current.j2", &mut context)
+    Ok(HttpResponse::Ok().json(current_readings_result))
 }

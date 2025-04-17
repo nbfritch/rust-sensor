@@ -1,14 +1,14 @@
 #[derive(Debug)]
 pub enum EventError {
     DatabaseError(sqlx::Error),
-    TemplateError(tera::Error),
+    ValidationError(validator::ValidationErrors),
 }
 
 impl actix_web::error::ResponseError for EventError {
     fn status_code(&self) -> actix_web::http::StatusCode {
         match *self {
             Self::DatabaseError(_) => actix_web::http::StatusCode::SEE_OTHER,
-            Self::TemplateError(_) => actix_web::http::StatusCode::SERVICE_UNAVAILABLE,
+            Self::ValidationError(_) => actix_web::http::StatusCode::BAD_REQUEST,
         }
     }
 
@@ -21,10 +21,11 @@ impl actix_web::error::ResponseError for EventError {
                         actix_web::http::header::HeaderValue::from_static("error"),
                     ))
                     .finish()
-            }
-            EventError::TemplateError(_) => {
-                actix_web::HttpResponse::build(actix_web::http::StatusCode::SERVICE_UNAVAILABLE)
-                    .body("<h1>Please, try again later</h1>")
+            },
+            EventError::ValidationError(v) => {
+                let errstr = v.to_string();
+                actix_web::HttpResponse::build(actix_web::http::StatusCode::BAD_REQUEST)
+                    .body(errstr)
             }
         }
     }
@@ -34,7 +35,7 @@ impl std::fmt::Display for EventError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             EventError::DatabaseError(e) => write!(f, "database error: {e}"),
-            EventError::TemplateError(e) => write!(f, "cannot parse template: {e}"),
+            EventError::ValidationError(v) => write!(f, "validation error: {v}"),
         }
     }
 }
@@ -45,8 +46,8 @@ impl From<sqlx::Error> for EventError {
     }
 }
 
-impl From<tera::Error> for EventError {
-    fn from(value: tera::Error) -> Self {
-        Self::TemplateError(value)
+impl From<validator::ValidationErrors> for EventError {
+    fn from(value: validator::ValidationErrors) -> Self {
+        Self::ValidationError(value)
     }
 }

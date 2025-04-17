@@ -5,8 +5,8 @@ use actix_web::{
 };
 use serde_json::json;
 
-use crate::models::ReadingType;
-use crate::types::CreateReadingRequest;
+use crate::types::reading_type::ReadingType;
+use crate::types::reading::CreateReadingRequest;
 
 fn validate_reading_req(create_reading_request: &CreateReadingRequest) -> bool {
     let v = create_reading_request.reading_value;

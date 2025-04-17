@@ -3,3 +3,4 @@
 rust_sensor.tar.gz
 /node_modules
 /release
+.envrc

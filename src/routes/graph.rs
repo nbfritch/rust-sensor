@@ -1,142 +1,125 @@
-use std::collections::HashMap;
+use crate::types::
+    graph::{GraphReading, GraphRes, GraphRow}
+;
 use actix_web::{web, HttpResponse};
+use chrono::TimeDelta;
+use log::error;
 use serde::Deserialize;
 use serde_json::json;
-use crate::{models::{GraphReadingRow, ReadingType}, types::{GraphPoint, SensorLine}};
+use std::collections::HashMap;
 
-struct Interval {
-    days_ago: i32,
-    hours_ago: i32,
-    resolution: i32,
-}
+fn fold_line_data(points: Vec<GraphRow>) -> GraphRes {
+    let mut d = HashMap::new();
+    let mut min: Option<f64> = None;
+    let mut max: Option<f64> = None;
 
-fn interval_for_query(name: String) -> Interval {
-    if name == "hour" {
-        Interval {
-            days_ago: 0,
-            hours_ago: -1,
-            resolution: 1,
+    for point in points.iter() {
+        let rv = point.reading_value.unwrap();
+        match min {
+            Some(v) => {
+                if rv < v {
+                    min = Some(rv)
+                }
+            }
+            None => min = Some(rv),
         }
-    } else if name == "day" {
-        Interval {
-            days_ago: -1,
-            hours_ago: 0,
-            resolution: 10,
+
+        match max {
+            Some(v) => {
+                if rv > v {
+                    max = Some(rv)
+                }
+            }
+            None => max = Some(rv),
         }
-    } else if name == "week" {
-        Interval {
-            days_ago: -7,
-            hours_ago: 0,
-            resolution: 60,
-        }
-    } else if name == "month" {
-        Interval {
-            days_ago: -30,
-            hours_ago: 0,
-            resolution: 180,
-        }
-    } else {
-        Interval {
-            days_ago: 0,
-            hours_ago: -1,
-            resolution: 1,
-        }
+
+        let e = d.entry(point.sensor_id.unwrap()).or_insert(Vec::new());
+        e.push(GraphReading {
+            reading_date: point.reading_date.unwrap(),
+            reading_value: point.reading_value.unwrap(),
+        });
+    }
+
+    GraphRes {
+        min: min.unwrap_or(0.0),
+        max: max.unwrap_or(0.0),
+        data: d,
     }
 }
 
 #[derive(Clone, Deserialize)]
-pub struct QueryInfo {
-    last: Option<String>,
-    reading_type: i32,
+#[serde(rename_all = "camelCase")]
+pub struct QueryInfoV2 {
+    pub reading_type: i32,
+    pub start_date: String,
+    pub end_date: String,
 }
 
-pub async fn graph_page(state: web::Data<crate::state::AppState>) -> super::EventResponse {
-    let mut ctx = tera::Context::new();
-    state.render_template("graph.j2", &mut ctx)
-}
-
-pub async fn graph_data(
+pub async fn graph_data_v2(
     pool: web::Data<sqlx::PgPool>,
-    query_params: web::Query<QueryInfo>,
+    query_params: web::Query<QueryInfoV2>,
 ) -> super::EventResponse {
-    let last_interval = query_params.last.clone().unwrap_or(String::from("hour"));
-    let reading_type = ReadingType::from_int(query_params.reading_type);
-    let reading_type_id = if reading_type.is_none() { 1 } else { query_params.reading_type };
-    let mut conn = pool.acquire().await?;
-    let interval = interval_for_query(last_interval);
-    let graph_data = sqlx::query!("
-        select
-            s.id,
-            s.name,
-            s.description,
-            floor(i.reading_date)::bigint as reading_date,
-            avg(i.reading_value) as reading_value,
-            s.color_hex_code,
-            s.font_hex_code
-        from (
-            select
-            r.reading_value as reading_value,
-            r.sensor_id,
-            (
-            floor(
-                extract(epoch from r.reading_date) /
-                extract(epoch from make_interval(0, 0, 0, 0, 0, $3::int, 0.0))
-            ) *
-            extract(epoch from make_interval(0, 0, 0, 0, 0, $3::int, 0.0))
-            ) as reading_date
-            from readings r
-            where r.reading_type = $4::int and r.reading_date > (
-            current_timestamp at time zone 'utc' +
-            make_interval(0, 0, 0, $1::int, $2::int, 0, 0.0)
-            )
-        ) i
-        join sensors s on s.id = i.sensor_id
-        group by s.id, s.description, i.reading_date
-        order by s.id, i.reading_date",
-        interval.days_ago,
-        interval.hours_ago,
-        interval.resolution,
-        reading_type_id
-    )
-    .map(|x| GraphReadingRow {
-        id: x.id,
-        name: x.name,
-        description: x.description,
-        reading_value: x.reading_value,
-        reading_date: x.reading_date,
-        color_hex_code: x.color_hex_code,
-        font_hex_code: x.font_hex_code,
-    })
-    .fetch_all(conn.as_mut())
-    .await;
+    let start_date_res =
+        chrono::NaiveDateTime::parse_from_str(&query_params.start_date, "%Y-%m-%dT%H:%M:%S%Z");
+    let end_date_res =
+        chrono::NaiveDateTime::parse_from_str(&query_params.end_date, "%Y-%m-%dT%H:%M:%S%Z");
 
-    if graph_data.is_err() {
-        return Ok(HttpResponse::InternalServerError()
-            .json(json!({"status": "error","message": "Error retrieving current data"})));
+    if let Err(e) = start_date_res {
+        error!("Error parsing startDate {}: {}", query_params.start_date, e);
     }
 
-    let lines: HashMap<i64, SensorLine> = HashMap::new();
-    let folded_data = graph_data.unwrap().iter().fold(lines, |mut acc, el| {
-        let line = acc.entry(el.id).or_insert_with(|| SensorLine {
-            id: el.id,
-            name: el.name.clone().unwrap_or(String::from("MISSING")),
-            description: el.description.clone().unwrap_or(String::from("MISSING")),
-            points: Vec::new(),
-            color_hex_code: el.color_hex_code.clone(),
-            font_hex_code: el.font_hex_code.clone(),
-        });
+    if let Err(e) = end_date_res {
+        error!("Error parsing endDate {}: {}", query_params.start_date, e);
+    }
 
-        if el.reading_value.is_some() && el.reading_date.is_some() {
-            line.points.push(GraphPoint {
-                reading_value: el.reading_value.unwrap(),
-                reading_date: el.reading_date.unwrap(),
-            });
-        }
+    let (Ok(start_date), Ok(end_date)) = (start_date_res, end_date_res) else {
+        return Ok(HttpResponse::BadRequest().json(json!({
+            "error": "Invalid date",
+            "details": "Failed to parse dates"
+        })));
+    };
+    let seconds_difference = (end_date - start_date).num_seconds().abs();
+    let minute_resolution = if seconds_difference <= TimeDelta::hours(24).num_seconds() {
+        1
+    } else if seconds_difference <= TimeDelta::days(7).num_seconds() {
+        60
+    } else {
+        180
+    };
 
-        acc
-    });
+    let mut conn = pool.acquire().await?;
+    let graph_points = sqlx::query_as!(
+        GraphRow,
+        "select
+      i.sensor_id,
+      floor(i.reading_date)::bigint as reading_date,
+      avg(i.reading_value) as reading_value
+    from (
+      select
+        r.sensor_id,
+        r.reading_value,
+        (
+          floor(
+            extract(epoch from r.reading_date) /
+            extract(epoch from make_interval(0, 0, 0, 0, 0, $1, 0.0))
+          ) * extract(epoch from  make_interval(0, 0, 0, 0, 0, $1, 0.0))
+        ) as reading_date
+      from readings r
+      where
+        r.reading_type = $4 and
+        r.reading_date between $2 and $3
+    ) i
+    group by i.sensor_id, i.reading_date
+    order by i.sensor_id, i.reading_date",
+        minute_resolution,
+        start_date,
+        end_date,
+        query_params.reading_type
+    )
+    .fetch_all(conn.as_mut())
+    .await?;
 
-    let final_lines = folded_data.values().collect::<Vec<_>>();
+    let split_points = fold_line_data(graph_points);
 
-    Ok(HttpResponse::Ok().json(final_lines))
+    Ok(HttpResponse::Ok().json(split_points))
 }

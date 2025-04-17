@@ -1,26 +1,17 @@
 mod errors;
-mod models;
 mod routes;
-mod state;
 mod types;
-mod url;
-use crate::{routes::index::index, state::AppStateStruct};
+
+use crate::routes::index::index;
 use actix_web::{
     middleware::Logger,
     web::{self, Data},
     App, HttpServer,
 };
-use actix_web_static_files::ResourceFiles;
 use routes::{
-    graph::{graph_data, graph_page},
-    history::historical_graph,
-    readings::create_reading,
+    current::get_current_readings, graph::graph_data_v2, readings::create_reading, sensor::{create_sensor, get_all_sensors, update_sensor}
 };
 use sqlx::postgres::PgPoolOptions;
-use std::path::Path;
-use url::build_href_for;
-
-include!(concat!(env!("OUT_DIR"), "/generated.rs"));
 
 #[tokio::main]
 async fn main() {
@@ -44,41 +35,21 @@ async fn main() {
         .await
         .expect("Could not connect to database");
 
-    let template_folder = Path::new("./templates");
-
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
     HttpServer::new(move || {
         let cors = actix_cors::Cors::permissive();
-        let generated = generate();
-        let available_files = generated
-            .keys()
-            .map(|k| String::from(*k))
-            .collect::<Vec<_>>();
-        let state = std::sync::Arc::new(AppStateStruct::new({
-            let mut tera = tera::Tera::new(
-                &(template_folder
-                    .to_str()
-                    .expect("cannot get templates folder")
-                    .to_string()
-                    + "/**/*"),
-            )
-            .expect("Parsing error while loading template folder");
-            tera.register_function("href_for", build_href_for(available_files));
-            tera.autoescape_on(vec!["j2"]);
-            tera
-        }));
 
         App::new()
             .wrap(cors)
             .wrap(Logger::default())
-            .service(ResourceFiles::new("/static", generated))
             .service(web::resource("/").to(index))
             .service(create_reading)
-            .route("/graph", web::get().to(graph_page))
-            .route("/api/graph", web::get().to(graph_data))
-            .route("/api/history", web::get().to(historical_graph))
-            .app_data(Data::new(state))
+            .route("/api/v2/current", web::get().to(get_current_readings))
+            .route("/api/v2/sensors", web::get().to(get_all_sensors))
+            .route("/api/v2/sensors", web::put().to(create_sensor))
+            .route("/api/v2/sensors", web::post().to(update_sensor))
+            .route("/api/v2/graph", web::get().to(graph_data_v2))
             .app_data(Data::new(pool.clone()))
     })
     .bind((web_address, web_port))
