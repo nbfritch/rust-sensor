@@ -1,0 +1,18 @@
+[Unit]
+Description=Sensornet api
+
+[Service]
+WorkingDirectory=/tank_app/applications/sensornet
+Environment=DATABASE_URL=postgres://
+Environment=WEB_PORT=3031
+Environment=WEB_ADDR=127.0.0.1
+ReadWritePaths=/tank_app/applications/sensornet
+ExecStart=/usr/local/bin/sensornet_api
+ProtectSystem=no
+ProtectHome=true
+PrivateUsers=false
+PrivateTmp=true
+DynamicUser=yes
+
+[Install]
+WantedBy=multi-user.target
