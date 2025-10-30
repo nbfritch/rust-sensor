@@ -52,6 +52,7 @@ async fn main() {
             .route("/api/v2/graph", web::get().to(graph_data_v2))
             .app_data(Data::new(pool.clone()))
     })
+    .workers(2)
     .bind((web_address, web_port))
     .expect("Could not bind address")
     .run()
